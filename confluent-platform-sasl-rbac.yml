@@ -814,6 +814,7 @@ services:
         ./create-admin-role-bindings.sh sasl User
         ./create-schema-registry-role-bindings.sh sasl User
         ./create-kafka-connect-role-bindings.sh sasl User
+        ./create-control-center-role-bindings.sh sasl User
         touch /tmp/initialized
         tail -f /dev/null
     depends_on:
