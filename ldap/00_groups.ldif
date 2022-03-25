@@ -1,0 +1,10 @@
+dn: ou=users,{{ LDAP_BASE_DN }}
+ou: users
+description: generic user branch
+objectClass: organizationalunit
+
+
+dn: ou=groups,{{ LDAP_BASE_DN }}
+ou: groups
+description: generic group branch
+objectClass: organizationalunit

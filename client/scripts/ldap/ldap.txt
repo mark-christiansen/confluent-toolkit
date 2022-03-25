@@ -1,0 +1,42 @@
+cat > /tmp/rest.ldif
+dn: cn=rest,dc=test,dc=com
+userPassword: rest-secret
+description: rest user
+objectClass: simpleSecurityObject
+objectClass: organizationalRole
+cn: rest
+
+# add user to LDAP
+ldapadd -x -D "cn=admin,dc=test,dc=com" -w confluentrox -f /tmp/rest.ldif
+
+# search LDAP
+ldapsearch -LLL -x -b 'dc=test,dc=com' -D "cn=mds,dc=test,dc=com" -w 'Developer!'
+
+# change password
+ldappasswd -x -D "cn=mark,dc=test,dc=com" -w mark2 -a mark2 -S
+
+# delete user
+ldapdelete -v -D "cn=admin,dc=test,dc=com" -w confluentrox "cn=devuser,dc=test,dc=com"
+ldapdelete -v -D "cn=admin,dc=test,dc=com" -w confluentrox "cn=erp,dc=test,dc=com"
+
+# change password
+ldappasswd -x -D "cn=kafka,dc=test,dc=com" -w kafka-secret2 -a kafka-secret2 -S
+
+# cat > /tmp/connectadmin.ldif
+dn: cn=connectadmin,ou=groups,dc=tgs,dc=com
+objectClass: top
+objectClass: posixGroup
+
+# ldapadd -x -W -D "cn=ramesh,dc=tgs,dc=com" -f group1.ldif
+Enter LDAP Password:
+adding new entry "cn=dbagrp,ou=groups,dc=tgs,dc=com"
+
+# add user to group
+dn: cn=dbagrp,ou=groups,dc=tgs,dc=com
+changetype: modify
+add: memberuid
+memberuid: adam
+
+ldapmodify -x -D "cn=admin,dc=test,dc=com" -w confluentrox -f file1.ldif
+
+ldappasswd -x -D "cn=james,dc=test,dc=com" -w james-secret -a james-secret -S

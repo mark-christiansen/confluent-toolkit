@@ -1,0 +1,14 @@
+dn: cn=connect,ou=users,{{ LDAP_BASE_DN }}
+cn: connect
+uid: connect
+sn: Kafka Connect Worker
+userpassword: connect-secret
+description: connect user
+objectclass: inetorgperson
+
+
+dn: cn=connects,ou=groups,{{ LDAP_BASE_DN }}
+cn: connects
+objectClass: groupofnames
+description: connect group
+member: cn=connect,ou=users,{{ LDAP_BASE_DN }}

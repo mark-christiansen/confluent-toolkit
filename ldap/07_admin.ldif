@@ -1,0 +1,14 @@
+dn: cn=admin,ou=users,{{ LDAP_BASE_DN }}
+cn: admin
+uid: admin
+sn: Kafka Administrator
+userpassword: admin-secret
+description: admin user
+objectclass: inetorgperson
+
+
+dn: cn=admins,ou=groups,{{ LDAP_BASE_DN }}
+cn: admins
+objectClass: groupofnames
+description: admin group
+member: cn=admin,ou=users,{{ LDAP_BASE_DN }}

@@ -1,0 +1,14 @@
+dn: cn=schema,ou=users,{{ LDAP_BASE_DN }}
+cn: schema
+uid: schema
+sn: Schema Registry
+userpassword: schema-secret
+description: schema user
+objectclass: inetorgperson
+
+
+dn: cn=schemas,ou=groups,{{ LDAP_BASE_DN }}
+cn: schemas
+objectClass: groupofnames
+description: schema group
+member: cn=schema,ou=users,{{ LDAP_BASE_DN }}

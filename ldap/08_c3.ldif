@@ -1,0 +1,14 @@
+dn: cn=c3,ou=users,{{ LDAP_BASE_DN }}
+cn: c3
+uid: c3
+sn: Control Center
+userpassword: c3-secret
+description: c3 user
+objectclass: inetorgperson
+
+
+dn: cn=c3s,ou=groups,{{ LDAP_BASE_DN }}
+cn: c3s
+objectClass: groupofnames
+description: c3 group
+member: cn=c3,ou=users,{{ LDAP_BASE_DN }}

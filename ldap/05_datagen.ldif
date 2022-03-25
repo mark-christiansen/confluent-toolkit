@@ -1,0 +1,14 @@
+dn: cn=datagen,ou=users,{{ LDAP_BASE_DN }}
+cn: datagen
+uid: datagen
+sn: Datagen Connector
+userpassword: datagen-secret
+description: datagen user
+objectclass: inetorgperson
+
+
+dn: cn=datagens,ou=groups,{{ LDAP_BASE_DN }}
+cn: datagens
+objectClass: groupofnames
+description: datagen group
+member: cn=datagen,ou=users,{{ LDAP_BASE_DN }}

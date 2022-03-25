@@ -1,0 +1,14 @@
+dn: cn=kafka,ou=users,{{ LDAP_BASE_DN }}
+cn: kafka
+uid: kafka
+sn: Kafka Broker
+userpassword: kafka-secret
+description: kafka user
+objectClass: inetOrgPerson
+
+
+dn: cn=kafkas,ou=groups,{{ LDAP_BASE_DN }}
+cn: kafkas
+objectClass: groupofnames
+description: kafka group
+member: cn=kafka,ou=users,{{ LDAP_BASE_DN }}

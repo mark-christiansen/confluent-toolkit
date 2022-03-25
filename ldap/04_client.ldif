@@ -1,0 +1,14 @@
+dn: cn=client,ou=users,{{ LDAP_BASE_DN }}
+cn: client
+uid: client
+sn: Kafka Client
+userpassword: client-secret
+description: client user
+objectclass: inetorgperson
+
+
+dn: cn=clients,ou=groups,{{ LDAP_BASE_DN }}
+cn: clients
+objectClass: groupofnames
+description: client group
+member: cn=client,ou=users,{{ LDAP_BASE_DN }}

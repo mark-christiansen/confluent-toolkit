@@ -1,0 +1,181 @@
+version: '3.5'
+services:
+
+  schema1:
+    image: confluentinc/cp-schema-registry:${CONFLUENT_VERSION}
+    hostname: schema1
+    container_name: schema1
+    ports:
+      - 8081:8081
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: 'schema1'
+      SCHEMA_REGISTRY_LISTENERS: 'https://0.0.0.0:8081'
+      # kafka store
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'SSL://lb:29092'
+      SCHEMA_REGISTRY_KAFKASTORE_SECURITY_PROTOCOL: 'SSL'
+      SCHEMA_REGISTRY_KAFKASTORE_SSL_KEYSTORE_LOCATION: '/var/ssl/private/schema1.kafka_network.keystore.jks'
+      SCHEMA_REGISTRY_KAFKASTORE_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+      SCHEMA_REGISTRY_KAFKASTORE_SSL_KEY_PASSWORD: ${KEYSTORE_PASSWORD}
+      SCHEMA_REGISTRY_KAFKASTORE_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/schema1.kafka_network.truststore.jks'
+      SCHEMA_REGISTRY_KAFKASTORE_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+      SCHEMA_REGISTRY_KAFKASTORE_TOPIC: '_schemas'
+      SCHEMA_REGISTRY_KAFKASTORE_ZK_SESSION_TIMEOUT_MS: 60000
+      SCHEMA_REGISTRY_KAFKASTORE_TIMEOUT_MS: 10000
+      SCHEMA_REGISTRY_KAFKASTORE_INIT_TIMEOUT_MS: 120000
+      # encryption
+      SCHEMA_REGISTRY_SSL_KEYSTORE_LOCATION: '/var/ssl/private/schema1.kafka_network.keystore.jks'
+      SCHEMA_REGISTRY_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+      SCHEMA_REGISTRY_SSL_KEY_PASSWORD: ${KEYSTORE_PASSWORD}
+      SCHEMA_REGISTRY_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/schema1.kafka_network.truststore.jks'
+      SCHEMA_REGISTRY_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+      # communication between schema registry servers
+      SCHEMA_REGISTRY_INTER_INSTANCE_PROTOCOL: 'https'
+      SCHEMA_REGISTRY_CONSUMER_GROUP_ID: 'schema-registry'
+    volumes:
+      - ./certs:/var/ssl/private:ro
+    networks:
+      - kafka-network
+
+  connect1:
+    image: confluentinc/cp-server-connect:${CONFLUENT_VERSION}
+    hostname: connect1
+    container_name: connect1
+    depends_on:
+      - schema1
+    command:
+      - bash
+      - -c
+      - |
+        echo "Installing Connectors"
+        confluent-hub install --no-prompt confluentinc/kafka-connect-datagen:0.5.2
+        confluent-hub install --no-prompt confluentinc/kafka-connect-jdbc:10.2.6
+        curl -k https://jdbc.postgresql.org/download/postgresql-42.3.1.jar --output /usr/share/java/postgresql-42.3.1.jar
+        #
+        echo "Starting Kafka Connect server"
+        /etc/confluent/docker/run &
+        sleep infinity
+    ports:
+      - 8083:8083
+      #- 9012:9010
+    environment:
+      CONNECT_BOOTSTRAP_SERVERS: 'SSL://lb:29092'
+      CONNECT_SECURITY_PROTOCOL: 'SSL'
+      CONNECT_SSL_KEYSTORE_LOCATION: '/var/ssl/private/connect1.kafka_network.keystore.jks'
+      CONNECT_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+      CONNECT_SSL_KEY_PASSWORD: ${KEYSTORE_PASSWORD}
+      CONNECT_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/connect1.kafka_network.truststore.jks'
+      CONNECT_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+      CONNECT_REST_ADVERTISED_HOST_NAME: connect1
+      CONNECT_REST_PORT: 8083
+      CONNECT_GROUP_ID: docker-connect-cluster
+      CONNECT_CONFIG_STORAGE_TOPIC: docker-connect-configs
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 3
+      CONNECT_OFFSET_FLUSH_INTERVAL_MS: 10000
+      CONNECT_OFFSET_STORAGE_TOPIC: docker-connect-offsets
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 3
+      CONNECT_STATUS_STORAGE_TOPIC: docker-connect-status
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 3
+      CONNECT_KEY_CONVERTER: io.confluent.connect.avro.AvroConverter
+      CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: https://schema1:8081
+      CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_SSL_KEYSTORE_LOCATION: '/var/ssl/private/connect1.kafka_network.keystore.jks'
+      CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+      CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_SSL_KEY_PASSWORD: ${KEYSTORE_PASSWORD}
+      CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/connect1.kafka_network.truststore.jks'
+      CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+      CONNECT_KEY_SUBJECT_NAME_STRATEGY: io.confluent.kafka.serializers.subject.RecordNameStrategy
+      CONNECT_VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: https://schema1:8081
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_SSL_KEYSTORE_LOCATION: '/var/ssl/private/connect1.kafka_network.keystore.jks'
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_SSL_KEY_PASSWORD: ${KEYSTORE_PASSWORD}
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/connect1.kafka_network.truststore.jks'
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+      CONNECT_VALUE_SUBJECT_NAME_STRATEGY: io.confluent.kafka.serializers.subject.RecordNameStrategy
+      CONNECT_INTERNAL_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_INTERNAL_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_ZOOKEEPER_CONNECT: zoo1:2181,zoo2:2182,zoo3:2183
+      CONNECT_CONNECTOR_CLIENT_CONFIG_OVERRIDE_POLICY: All
+      CONNECT_LISTENERS: https://0.0.0.0:8083
+      CONNECT_REST_ADVERTISED_LISTENER: https
+      # Set in seconds, this was changed to allow for detection of new topics and partitions quicker by the
+      # JDBC sink connector (default is five minutes). Comment out this setting for overall better consumer
+      # performance.
+      CONNECT_METADATA_MAX_AGE_MS: 60
+      CONNECT_PLUGIN_PATH: /usr/share/java,/usr/share/confluent-hub-components
+      CONNECT_LOG4J_LOGGERS: org.apache.zookeeper=ERROR,org.I0Itec.zkclient=ERROR,org.reflections=ERROR,org.apache.kafka=ERROR,org.apache.hadoop=ERROR,org.apache.parquet=ERROR,io.confluent=ERROR,org.apache.kafka.connect.runtime=ERROR
+      #KAFKA_JMX_OPTS: "-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port=9010 -Dcom.sun.management.jmxremote.rmi.port=9010 -Djava.rmi.server.hostname=10.0.0.193"
+    volumes:
+      - ./schemas:/schemas:ro
+      - ./certs:/var/ssl/private:ro
+    networks:
+      - kafka-network
+
+#  control-center:
+#    image: confluentinc/cp-enterprise-control-center:${CONFLUENT_VERSION}
+#    hostname: control-center
+#    container_name: control-center
+#    depends_on:
+#      - schema1
+#      - connect1
+#    ports:
+#      - "9021:9021"
+#    environment:
+#      CONTROL_CENTER_BOOTSTRAP_SERVERS: 'SSL://lb:29092'
+#      CONTROL_CENTER_SSL_KEYSTORE_LOCATION: '/var/ssl/private/c3.kafka_network.keystore.jks'
+#      CONTROL_CENTER_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+#      CONTROL_CENTER_SSL_KEY_PASSWORD: ${KEYSTORE_PASSWORD}
+#      CONTROL_CENTER_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/c3.kafka_network.truststore.jks'
+#      CONTROL_CENTER_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+#      # schema registry
+#      CONTROL_CENTER_SCHEMA_REGISTRY_SCHEMA1_URL: "https://schema1:8081"
+#      CONTROL_CENTER_SCHEMA_REGISTRY_SCHEMA1_SSL_KEYSTORE_LOCATION: '/var/ssl/private/c3.kafka_network.keystore.jks'
+#      CONTROL_CENTER_SCHEMA_REGISTRY_SCHEMA1_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+#      CONTROL_CENTER_SCHEMA_REGISTRY_SCHEMA1_SSL_KEY_PASSWORD: ${KEYSTORE_PASSWORD}
+#      CONTROL_CENTER_SCHEMA_REGISTRY_SCHEMA1_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/c3.kafka_network.truststore.jks'
+#      CONTROL_CENTER_SCHEMA_REGISTRY_SCHEMA1_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+#      # streams
+#      CONTROL_CENTER_STREAMS_SECURITY_PROTOCOL: 'SSL'
+#      CONTROL_CENTER_STREAMS_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/c3.kafka_network.truststore.jks'
+#      CONTROL_CENTER_STREAMS_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+#      CONTROL_CENTER_STREAMS_SSL_KEYSTORE_LOCATION: '/var/ssl/private/c3.kafka_network.keystore.jks'
+#      CONTROL_CENTER_STREAMS_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+#      CONTROL_CENTER_STREAMS_SSL_KEY_PASSWORD: ${KEYSTORE_PASSWORD}
+#      # reset
+#      CONTROL_CENTER_REST_LISTENERS: https://0.0.0.0:9021
+#      CONTROL_CENTER_REST_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/c3.kafka_network.truststore.jks'
+#      CONTROL_CENTER_REST_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+#      CONTROL_CENTER_REST_SSL_KEYSTORE_LOCATION: '/var/ssl/private/c3.kafka_network.keystore.jks'
+#      CONTROL_CENTER_REST_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+#      CONTROL_CENTER_REST_SSL_KEY_PASSWORD: ${KEYSTORE_PASSWORD}
+#      # connect
+#      CONTROL_CENTER_CONNECT_CONNECT1_CLUSTER: https://connect1:8083
+#      # topics
+#      CONTROL_CENTER_REPLICATION_FACTOR: 3
+#      CONTROL_CENTER_INTERNAL_TOPICS_PARTITIONS: 1
+#      CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: 1
+#      CONFLUENT_METRICS_TOPIC_REPLICATION: 1
+#      PORT: 9021
+#    volumes:
+#      - ./certs:/var/ssl/private:ro
+#    networks:
+#      - kafka-network
+
+  postgres:
+    image: postgres
+    hostname: postgres
+    container_name: postgres
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespass
+      POSTGRES_DB: kafka
+      PGDATA: /data
+    volumes:
+      - ./volumes/postgres:/data
+    networks:
+      - kafka-network
+
+networks:
+  kafka-network:
+    name: kafka_network

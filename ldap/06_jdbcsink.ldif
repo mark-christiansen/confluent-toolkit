@@ -1,0 +1,14 @@
+dn: cn=jdbcsink,ou=users,{{ LDAP_BASE_DN }}
+cn: jdbcsink
+uid: jdbcsink
+sn: JDBC Sink Connector
+userpassword: jdbcsink-secret
+description: jdbcsink user
+objectclass: inetorgperson
+
+
+dn: cn=jdbcsinks,ou=groups,{{ LDAP_BASE_DN }}
+cn: jdbcsinks
+objectClass: groupofnames
+description: jdbcsink group
+member: cn=jdbcsink,ou=users,{{ LDAP_BASE_DN }}
