@@ -9,6 +9,12 @@ cd ${BASE}
 
 export CONFLUENT_USERNAME=kafka
 export CONFLUENT_PASSWORD=kafka-secret
-confluent login --save --url $MDS_URL --ca-cert-path=$KEYSTORE_DIR/ca.crt
+
+success=1
+while [ $success -gt 0 ]; do
+  echo "attempting to login"
+  confluent login --save --url $MDS_URL --ca-cert-path=$KEYSTORE_DIR/ca.crt
+  success="$?"
+done
 
 echo "Logged into Kafka cluster"

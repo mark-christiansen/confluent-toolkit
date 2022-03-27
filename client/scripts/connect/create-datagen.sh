@@ -66,7 +66,7 @@ if [[ $SSL == "true" ]]; then
     SASL_MECHANISM="PLAIN"
     SASL_MODULE="org.apache.kafka.common.security.plain.PlainLoginModule"
     if [[ $ENV == "scram" ]]; then
-      SASL_MECHANISM="SCRAM-SHA-256"
+      SASL_MECHANISM="SCRAM-SHA-512"
       SASL_MODULE="org.apache.kafka.common.security.scram.ScramLoginModule"
     fi
 
