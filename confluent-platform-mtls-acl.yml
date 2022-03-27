@@ -41,6 +41,12 @@ services:
       - ./certs:/var/ssl/private:ro
     networks:
       - kafka-network
+    healthcheck:
+      test: ["CMD", "bash", "-c", "(echo -e ruok | openssl 2>&1 s_client -quiet -connect zoo1:2181 -CAfile /var/ssl/private/intermediate.crt -cert /var/ssl/private/kafka1.kafka_network_cert.pem -key /var/ssl/private/kafka1.kafka_network_key.pem -pass pass:serverpassword) | grep -e imok"]
+      start_period: 5s
+      interval: 20s
+      timeout: 10s
+      retries: 20
 
   zoo2:
     image: confluentinc/cp-zookeeper:${CONFLUENT_VERSION}
@@ -83,6 +89,12 @@ services:
       - ./certs:/var/ssl/private:ro
     networks:
       - kafka-network
+    healthcheck:
+      test: ["CMD", "bash", "-c", "(echo -e ruok | openssl 2>&1 s_client -quiet -connect zoo2:2182 -CAfile /var/ssl/private/intermediate.crt -cert /var/ssl/private/kafka1.kafka_network_cert.pem -key /var/ssl/private/kafka1.kafka_network_key.pem -pass pass:serverpassword) | grep -e imok"]
+      start_period: 5s
+      interval: 20s
+      timeout: 10s
+      retries: 20
 
   zoo3:
     image: confluentinc/cp-zookeeper:${CONFLUENT_VERSION}
@@ -124,15 +136,28 @@ services:
       - ./certs:/var/ssl/private:ro
     networks:
       - kafka-network
+    healthcheck:
+      test: ["CMD", "bash", "-c", "(echo -e ruok | openssl 2>&1 s_client -quiet -connect zoo2:2182 -CAfile /var/ssl/private/intermediate.crt -cert /var/ssl/private/kafka1.kafka_network_cert.pem -key /var/ssl/private/kafka1.kafka_network_key.pem -pass pass:serverpassword) | grep -e imok"]
+      start_period: 5s
+      interval: 20s
+      timeout: 10s
+      retries: 20
 
   kafka1:
     image: confluentinc/cp-server:${CONFLUENT_VERSION}
     hostname: kafka1
     container_name: kafka1
-    depends_on:
+    links:
       - zoo1
       - zoo2
       - zoo3
+    depends_on:
+      zoo1:
+        condition: service_healthy
+      zoo2:
+        condition: service_healthy
+      zoo3:
+        condition: service_healthy
     ports:
       - "9093:9093"
       - "29093:29093"
@@ -203,10 +228,17 @@ services:
     image: confluentinc/cp-server:${CONFLUENT_VERSION}
     hostname: kafka2
     container_name: kafka2
-    depends_on:
+    links:
       - zoo1
       - zoo2
       - zoo3
+    depends_on:
+      zoo1:
+        condition: service_healthy
+      zoo2:
+        condition: service_healthy
+      zoo3:
+        condition: service_healthy
     ports:
       - "9094:9094"
       - "29094:29094"
@@ -277,10 +309,17 @@ services:
     image: confluentinc/cp-server:${CONFLUENT_VERSION}
     hostname: kafka3
     container_name: kafka3
-    depends_on:
+    links:
       - zoo1
       - zoo2
       - zoo3
+    depends_on:
+      zoo1:
+        condition: service_healthy
+      zoo2:
+        condition: service_healthy
+      zoo3:
+        condition: service_healthy
     ports:
       - "9095:9095"
       - "29095:29095"

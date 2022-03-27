@@ -154,7 +154,7 @@ services:
     networks:
       - kafka-network
     healthcheck:
-      test: ["CMD", "bash", "-c", "(echo -e ruok | openssl 2>&1 s_client -quiet -connect zoo2:2182 -CAfile /var/ssl/private/intermediate.crt -cert /var/ssl/private/client.kafka_network_cert.pem -key /var/ssl/private/client.kafka_network_key.pem -pass pass:serverpassword) | grep -e imok"]
+      test: ["CMD", "bash", "-c", "(echo -e ruok | openssl 2>&1 s_client -quiet -connect zoo3:2183 -CAfile /var/ssl/private/intermediate.crt -cert /var/ssl/private/client.kafka_network_cert.pem -key /var/ssl/private/client.kafka_network_key.pem -pass pass:serverpassword) | grep -e imok"]
       start_period: 5s
       interval: 20s
       timeout: 10s
