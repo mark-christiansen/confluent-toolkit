@@ -20,3 +20,9 @@ CLUSTER_ID=$(kafka-cluster cluster-id --bootstrap-server $BROKER_URL --config $K
 echo "Retrieved Kafka cluster ID: $CLUSTER_ID"
 
 confluent iam rolebinding list --kafka-cluster-id $CLUSTER_ID $FILTER
+
+confluent iam rolebinding list --kafka-cluster-id PuBqk6TASS6bpLyJRjvAYQ
+
+kafka-acls --bootstrap-server lb:29092 --command-config ../config/sasl.config --add --topic=_schemas --producer --consumer --allow-principal="Group:schemas" --group schema-registry
+
+kafka-acls --bootstrap-server lb:29092 --command-config ../config/sasl.config --add --topic=_schemas --producer --consumer --allow-principal="User:schema" --group schema-registry

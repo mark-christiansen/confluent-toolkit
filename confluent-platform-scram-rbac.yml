@@ -154,11 +154,47 @@ services:
     networks:
       - kafka-network
     healthcheck:
-      test: ["CMD", "bash", "-c", "(echo -e ruok | openssl 2>&1 s_client -quiet -connect zoo2:2182 -CAfile /var/ssl/private/intermediate.crt -cert /var/ssl/private/client.kafka_network_cert.pem -key /var/ssl/private/client.kafka_network_key.pem -pass pass:serverpassword) | grep -e imok"]
+      test: ["CMD", "bash", "-c", "(echo -e ruok | openssl 2>&1 s_client -quiet -connect zoo3:2183 -CAfile /var/ssl/private/intermediate.crt -cert /var/ssl/private/client.kafka_network_cert.pem -key /var/ssl/private/client.kafka_network_key.pem -pass pass:serverpassword) | grep -e imok"]
       start_period: 5s
       interval: 20s
       timeout: 10s
       retries: 20
+
+  scram-client:
+    image: kafka-client:0.0.1
+    hostname: scram-client
+    container_name: scram-client
+    links:
+      - zoo1
+      - zoo2
+      - zoo3
+    depends_on:
+      zoo1:
+        condition: service_healthy
+      zoo2:
+        condition: service_healthy
+      zoo3:
+        condition: service_healthy
+    command:
+      - bash
+      - -c
+      - |
+        cd /scripts/setup
+        ./create-scram-users.sh scram
+        touch /tmp/initialized
+        tail -f /dev/null
+    volumes:
+      - ./client/scripts:/scripts:ro
+      - ./certs:/var/ssl/private:ro
+      - ./secrets:/etc/kafka/secrets:ro
+    networks:
+      - kafka-network
+    healthcheck:
+      test: ["CMD", "bash", "-c", "find /tmp/initialized"]
+      start_period: 30s
+      interval: 10s
+      timeout: 10s
+      retries: 10
 
   ldap:
     image: osixia/openldap:${OPENLDAP_VERSION}
@@ -193,11 +229,17 @@ services:
     image: confluentinc/cp-server:${CONFLUENT_VERSION}
     hostname: kafka1
     container_name: kafka1
+    command:
+      - bash
+      - -c
+      - |
+        /etc/confluent/docker/run &
+        sleep infinity
+    links:
+      - scram-client
     depends_on:
-      - zoo1
-      - zoo2
-      - zoo3
-      - ldap
+      scram-client:
+        condition: service_healthy
     ports:
       - "9093:9093"
       - "19093:19093"
@@ -215,6 +257,7 @@ services:
       KAFKA_ZOOKEEPER_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/kafka1.kafka_network.truststore.jks
       KAFKA_ZOOKEEPER_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       KAFKA_ZOOKEEPER_SSL_CIPHER_SUITES: ${SSL_CIPHER_SUITES}
+      KAFKA_ZOOKEEPER_SET_ACL: 'true'
       #KAFKA_ZOOKEEPER_SASL_CLIENT: 'true'
       # listeners
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: EXTERNAL:SASL_SSL,TOKEN:SASL_SSL,INTERNAL:SASL_SSL
@@ -227,32 +270,28 @@ services:
       KAFKA_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       KAFKA_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/kafka1.kafka_network.truststore.jks
       KAFKA_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-      KAFKA_SSL_CLIENT_AUTH: 'requested' # changed to required to force client to have cert
+      KAFKA_SSL_CLIENT_AUTH: 'none'
       KAFKA_SSL_CIPHER_SUITES: ${SSL_CIPHER_SUITES}
       # authentication
-      KAFKA_SASL_ENABLED_MECHANISMS: PLAIN,OAUTHBEARER
-      KAFKA_SASL_MECHANISM_INTER_BROKER_PROTOCOL: PLAIN
+      KAFKA_SASL_ENABLED_MECHANISMS: SCRAM-SHA-512,OAUTHBEARER
+      KAFKA_SASL_MECHANISM_INTER_BROKER_PROTOCOL: SCRAM-SHA-512
       # internal listener
-      KAFKA_LISTENER_NAME_INTERNAL_SASL_MECHANISM: PLAIN
-      KAFKA_LISTENER_NAME_INTERNAL_SASL_ENABLED_MECHANISMS: PLAIN
-      KAFKA_LISTENER_NAME_INTERNAL_PLAIN_SASL_JAAS_CONFIG: >-
-              org.apache.kafka.common.security.plain.PlainLoginModule required 
+      KAFKA_LISTENER_NAME_INTERNAL_SASL_MECHANISM: SCRAM-SHA-512
+      KAFKA_LISTENER_NAME_INTERNAL_SASL_ENABLED_MECHANISMS: SCRAM-SHA-512
+      KAFKA_LISTENER_NAME_INTERNAL_SCRAM___SHA___512_SASL_JAAS_CONFIG: >-
+              org.apache.kafka.common.security.scram.ScramLoginModule required 
               username="kafka" 
-              password="kafka-secret" 
-              user_kafka="kafka-secret"
-              user_client="client-secret"
-              user_datagen="datagen-secret" 
-              user_jdbcsink="jdbcsink-secret";
+              password="kafka-secret";
       KAFKA_LISTENER_NAME_INTERNAL_SSL_KEYSTORE_LOCATION: /var/ssl/private/kafka1.kafka_network.keystore.jks
       KAFKA_LISTENER_NAME_INTERNAL_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       KAFKA_LISTENER_NAME_INTERNAL_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/kafka1.kafka_network.truststore.jks
       KAFKA_LISTENER_NAME_INTERNAL_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       KAFKA_LISTENER_NAME_INTERNAL_SSL_PRINCIPAL_MAPPING_RULES: RULE:^cn=([a-zA-Z0-9.]*).*$$/$$1/L,DEFAULT
       # external listener
-      KAFKA_LISTENER_NAME_EXTERNAL_SASL_MECHANISM: PLAIN
-      KAFKA_LISTENER_NAME_EXTERNAL_SASL_ENABLED_MECHANISMS: PLAIN
-      KAFKA_LISTENER_NAME_EXTERNAL_PLAIN_SASL_JAAS_CONFIG: >-
-              org.apache.kafka.common.security.plain.PlainLoginModule required 
+      KAFKA_LISTENER_NAME_EXTERNAL_SASL_MECHANISM: SCRAM-SHA-512
+      KAFKA_LISTENER_NAME_EXTERNAL_SASL_ENABLED_MECHANISMS: SCRAM-SHA-512
+      KAFKA_LISTENER_NAME_EXTERNAL_SCRAM___SHA___512_SASL_JAAS_CONFIG: >-
+              org.apache.kafka.common.security.scram.ScramLoginModule required 
               user_admin="admin-secret" 
               user_client="client-secret";
       KAFKA_LISTENER_NAME_EXTERNAL_SSL_KEYSTORE_LOCATION: /var/ssl/private/kafka1.kafka_network.keystore.jks
@@ -295,10 +334,10 @@ services:
       CONFLUENT_METRICS_REPORTER_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       CONFLUENT_METRICS_REPORTER_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/kafka1.kafka_network.truststore.jks
       CONFLUENT_METRICS_REPORTER_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-      CONFLUENT_METRICS_REPORTER_SASL_MECHANISM: PLAIN
+      CONFLUENT_METRICS_REPORTER_SASL_MECHANISM: SCRAM-SHA-512
       CONFLUENT_METRICS_REPORTER_PUBLISH_MS: 30000
       CONFLUENT_METRICS_REPORTER_SASL_JAAS_CONFIG: >-
-              org.apache.kafka.common.security.plain.PlainLoginModule required 
+              org.apache.kafka.common.security.scram.ScramLoginModule required 
               username="kafka" 
               password="kafka-secret";
       # mds
@@ -373,7 +412,10 @@ services:
       #KAFKA_OPTS: '-Djavax.net.debug=ssl'
       #KAFKA_JMX_PORT: 9010
       #KAFKA_JMX_HOSTNAME: localhost
-      KAFKA_OPTS: "-Djava.security.auth.login.config=/etc/kafka/secrets/zoo-client-jaas.conf"
+      KAFKA_OPTS: >-
+          -Djava.security.auth.login.config=/etc/kafka/secrets/zoo-client-jaas.conf 
+          -Dzookeeper.sasl.client=true 
+          -Dzookeeper.sasl.client.username=kafka
     volumes:
       - ./volumes/kafka-1/data:/var/lib/kafka/data
       - ./volumes/kafka-1/logs:/var/log/kafka
@@ -383,7 +425,7 @@ services:
     networks:
       - kafka-network
     healthcheck:
-      test: ["CMD", "bash", "-c", "kafka-cluster cluster-id --bootstrap-server kafka1:29093 --config /etc/kafka/secrets/sasl-rbac-healthcheck.properties | grep -e 'Cluster ID: .*'"]
+      test: ["CMD", "bash", "-c", "kafka-cluster cluster-id --bootstrap-server kafka1:29093 --config /etc/kafka/secrets/scram-rbac-healthcheck.properties | grep -e 'Cluster ID: .*'"]
       start_period: 30s
       interval: 20s
       timeout: 10s
@@ -393,11 +435,11 @@ services:
     image: confluentinc/cp-server:${CONFLUENT_VERSION}
     hostname: kafka2
     container_name: kafka2
+    links:
+      - scram-client
     depends_on:
-      - zoo1
-      - zoo2
-      - zoo3
-      - ldap
+      scram-client:
+        condition: service_healthy
     ports:
       - "9094:9094"
       - "19094:19094"
@@ -415,6 +457,7 @@ services:
       KAFKA_ZOOKEEPER_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/kafka2.kafka_network.truststore.jks
       KAFKA_ZOOKEEPER_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       KAFKA_ZOOKEEPER_SSL_CIPHER_SUITES: ${SSL_CIPHER_SUITES}
+      KAFKA_ZOOKEEPER_SET_ACL: 'true'
       #KAFKA_ZOOKEEPER_SASL_CLIENT: 'true'
       # listeners
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: EXTERNAL:SASL_SSL,TOKEN:SASL_SSL,INTERNAL:SASL_SSL
@@ -427,41 +470,37 @@ services:
       KAFKA_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       KAFKA_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/kafka2.kafka_network.truststore.jks
       KAFKA_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-      KAFKA_SSL_CLIENT_AUTH: 'requested' # changed to required to force client to have cert
+      KAFKA_SSL_CLIENT_AUTH: 'none'
       KAFKA_SSL_CIPHER_SUITES: ${SSL_CIPHER_SUITES}
       # authentication
-      KAFKA_SASL_ENABLED_MECHANISMS: PLAIN,OAUTHBEARER
-      KAFKA_SASL_MECHANISM_INTER_BROKER_PROTOCOL: PLAIN
+      KAFKA_SASL_ENABLED_MECHANISMS: SCRAM-SHA-512,OAUTHBEARER
+      KAFKA_SASL_MECHANISM_INTER_BROKER_PROTOCOL: SCRAM-SHA-512
       # internal listener
-      KAFKA_LISTENER_NAME_INTERNAL_SASL_MECHANISM: PLAIN
-      KAFKA_LISTENER_NAME_INTERNAL_SASL_ENABLED_MECHANISMS: PLAIN
-      KAFKA_LISTENER_NAME_INTERNAL_PLAIN_SASL_JAAS_CONFIG: >-
-              org.apache.kafka.common.security.plain.PlainLoginModule required 
+      KAFKA_LISTENER_NAME_INTERNAL_SASL_MECHANISM: SCRAM-SHA-512
+      KAFKA_LISTENER_NAME_INTERNAL_SASL_ENABLED_MECHANISMS: SCRAM-SHA-512
+      KAFKA_LISTENER_NAME_INTERNAL_SCRAM___SHA___512_SASL_JAAS_CONFIG: >-
+              org.apache.kafka.common.security.scram.ScramLoginModule required 
               username="kafka" 
-              password="kafka-secret" 
-              user_kafka="kafka-secret"
-              user_client="client-secret"
-              user_datagen="datagen-secret" 
-              user_jdbcsink="jdbcsink-secret";
+              password="kafka-secret";
       KAFKA_LISTENER_NAME_INTERNAL_SSL_KEYSTORE_LOCATION: /var/ssl/private/kafka2.kafka_network.keystore.jks
       KAFKA_LISTENER_NAME_INTERNAL_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       KAFKA_LISTENER_NAME_INTERNAL_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/kafka2.kafka_network.truststore.jks
       KAFKA_LISTENER_NAME_INTERNAL_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       KAFKA_LISTENER_NAME_INTERNAL_SSL_PRINCIPAL_MAPPING_RULES: RULE:^cn=([a-zA-Z0-9.]*).*$$/$$1/L,DEFAULT
       # external listener
-      KAFKA_LISTENER_NAME_EXTERNAL_SASL_MECHANISM: PLAIN
-      KAFKA_LISTENER_NAME_EXTERNAL_SASL_ENABLED_MECHANISMS: PLAIN
-      KAFKA_LISTENER_NAME_EXTERNAL_PLAIN_SASL_JAAS_CONFIG: >-
-              org.apache.kafka.common.security.plain.PlainLoginModule required 
-              user_admin="admin-secret" 
-              user_client="client-secret";
+      KAFKA_LISTENER_NAME_EXTERNAL_SASL_MECHANISM: SCRAM-SHA-512
+      KAFKA_LISTENER_NAME_EXTERNAL_SASL_ENABLED_MECHANISMS: SCRAM-SHA-512
+      KAFKA_LISTENER_NAME_EXTERNAL_SCRAM___SHA___512_SASL_JAAS_CONFIG: >-
+              org.apache.kafka.common.security.scram.ScramLoginModule required 
+              username="kafka" 
+              password="kafka-secret";
       KAFKA_LISTENER_NAME_EXTERNAL_SSL_KEYSTORE_LOCATION: /var/ssl/private/kafka2.kafka_network.keystore.jks
       KAFKA_LISTENER_NAME_EXTERNAL_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       KAFKA_LISTENER_NAME_EXTERNAL_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/kafka2.kafka_network.truststore.jks
       KAFKA_LISTENER_NAME_EXTERNAL_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       KAFKA_LISTENER_NAME_EXTERNAL_SSL_PRINCIPAL_MAPPING_RULES: RULE:^cn=([a-zA-Z0-9.]*).*$$/$$1/L,DEFAULT
       # token listener
-      KAFKA_LISTENER_NAME_TOKEN_SASL_MECHANISMS: PLAIN
+      KAFKA_LISTENER_NAME_TOKEN_SASL_MECHANISMS: SCRAM-SHA-512
       KAFKA_LISTENER_NAME_TOKEN_SASL_ENABLED_MECHANISMS: OAUTHBEARER
       KAFKA_LISTENER_NAME_TOKEN_OAUTHBEARER_SASL_JAAS_CONFIG: >-
               org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required 
@@ -495,10 +534,10 @@ services:
       CONFLUENT_METRICS_REPORTER_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       CONFLUENT_METRICS_REPORTER_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/kafka2.kafka_network.truststore.jks
       CONFLUENT_METRICS_REPORTER_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-      CONFLUENT_METRICS_REPORTER_SASL_MECHANISM: PLAIN
+      CONFLUENT_METRICS_REPORTER_SASL_MECHANISM: SCRAM-SHA-512
       CONFLUENT_METRICS_REPORTER_PUBLISH_MS: 30000
       CONFLUENT_METRICS_REPORTER_SASL_JAAS_CONFIG: >-
-              org.apache.kafka.common.security.plain.PlainLoginModule required 
+              org.apache.kafka.common.security.scram.ScramLoginModule required 
               username="kafka" 
               password="kafka-secret";
       # mds
@@ -575,7 +614,10 @@ services:
       #KAFKA_OPTS: '-Djavax.net.debug=ssl'
       #KAFKA_JMX_PORT: 9010
       #KAFKA_JMX_HOSTNAME: localhost
-      KAFKA_OPTS: "-Djava.security.auth.login.config=/etc/kafka/secrets/zoo-client-jaas.conf"
+      KAFKA_OPTS: >-
+          -Djava.security.auth.login.config=/etc/kafka/secrets/zoo-client-jaas.conf 
+          -Dzookeeper.sasl.client=true 
+          -Dzookeeper.sasl.client.username=kafka
     volumes:
       - ./volumes/kafka-2/data:/var/lib/kafka/data
       - ./volumes/kafka-2/logs:/var/log/kafka
@@ -585,7 +627,7 @@ services:
     networks:
       - kafka-network
     healthcheck:
-      test: ["CMD", "bash", "-c", "kafka-cluster cluster-id --bootstrap-server kafka2:29094 --config /etc/kafka/secrets/sasl-rbac-healthcheck.properties | grep -e 'Cluster ID: .*'"]
+      test: ["CMD", "bash", "-c", "kafka-cluster cluster-id --bootstrap-server kafka2:29094 --config /etc/kafka/secrets/scram-rbac-healthcheck.properties | grep -e 'Cluster ID: .*'"]
       start_period: 30s
       interval: 20s
       timeout: 10s
@@ -595,11 +637,11 @@ services:
     image: confluentinc/cp-server:${CONFLUENT_VERSION}
     hostname: kafka3
     container_name: kafka3
+    links:
+      - scram-client
     depends_on:
-      - zoo1
-      - zoo2
-      - zoo3
-      - ldap
+      scram-client:
+        condition: service_healthy
     ports:
       - "9095:9095"
       - "19095:19095"
@@ -617,6 +659,7 @@ services:
       KAFKA_ZOOKEEPER_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/kafka3.kafka_network.truststore.jks
       KAFKA_ZOOKEEPER_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       KAFKA_ZOOKEEPER_SSL_CIPHER_SUITES: ${SSL_CIPHER_SUITES}
+      KAFKA_ZOOKEEPER_SET_ACL: 'true'
       #KAFKA_ZOOKEEPER_SASL_CLIENT: 'true'
       # listeners
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: EXTERNAL:SASL_SSL,TOKEN:SASL_SSL,INTERNAL:SASL_SSL
@@ -629,34 +672,30 @@ services:
       KAFKA_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       KAFKA_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/kafka3.kafka_network.truststore.jks
       KAFKA_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-      KAFKA_SSL_CLIENT_AUTH: 'requested' # changed to required to force client to have cert
+      KAFKA_SSL_CLIENT_AUTH: 'none'
       KAFKA_SSL_CIPHER_SUITES: ${SSL_CIPHER_SUITES}
       # authentication
-      KAFKA_SASL_ENABLED_MECHANISMS: PLAIN,OAUTHBEARER
-      KAFKA_SASL_MECHANISM_INTER_BROKER_PROTOCOL: PLAIN
+      KAFKA_SASL_ENABLED_MECHANISMS: SCRAM-SHA-512,OAUTHBEARER
+      KAFKA_SASL_MECHANISM_INTER_BROKER_PROTOCOL: SCRAM-SHA-512
       # internal listener
-      KAFKA_LISTENER_NAME_INTERNAL_SASL_MECHANISM: PLAIN
-      KAFKA_LISTENER_NAME_INTERNAL_SASL_ENABLED_MECHANISMS: PLAIN
-      KAFKA_LISTENER_NAME_INTERNAL_PLAIN_SASL_JAAS_CONFIG: >-
-              org.apache.kafka.common.security.plain.PlainLoginModule required 
+      KAFKA_LISTENER_NAME_INTERNAL_SASL_MECHANISM: SCRAM-SHA-512
+      KAFKA_LISTENER_NAME_INTERNAL_SASL_ENABLED_MECHANISMS: SCRAM-SHA-512
+      KAFKA_LISTENER_NAME_INTERNAL_SCRAM___SHA___512_SASL_JAAS_CONFIG: >-
+              org.apache.kafka.common.security.scram.ScramLoginModule required 
               username="kafka" 
-              password="kafka-secret" 
-              user_kafka="kafka-secret"
-              user_client="client-secret"
-              user_datagen="datagen-secret" 
-              user_jdbcsink="jdbcsink-secret";
+              password="kafka-secret";
       KAFKA_LISTENER_NAME_INTERNAL_SSL_KEYSTORE_LOCATION: /var/ssl/private/kafka3.kafka_network.keystore.jks
       KAFKA_LISTENER_NAME_INTERNAL_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       KAFKA_LISTENER_NAME_INTERNAL_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/kafka3.kafka_network.truststore.jks
       KAFKA_LISTENER_NAME_INTERNAL_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       KAFKA_LISTENER_NAME_INTERNAL_SSL_PRINCIPAL_MAPPING_RULES: RULE:^cn=([a-zA-Z0-9.]*).*$$/$$1/L,DEFAULT
       # external listener
-      KAFKA_LISTENER_NAME_EXTERNAL_SASL_MECHANISM: PLAIN
-      KAFKA_LISTENER_NAME_EXTERNAL_SASL_ENABLED_MECHANISMS: PLAIN
-      KAFKA_LISTENER_NAME_EXTERNAL_PLAIN_SASL_JAAS_CONFIG: >-
-              org.apache.kafka.common.security.plain.PlainLoginModule required 
-              user_admin="admin-secret" 
-              user_client="client-secret";
+      KAFKA_LISTENER_NAME_EXTERNAL_SASL_MECHANISM: SCRAM-SHA-512
+      KAFKA_LISTENER_NAME_EXTERNAL_SASL_ENABLED_MECHANISMS: SCRAM-SHA-512
+      KAFKA_LISTENER_NAME_EXTERNAL_SCRAM___SHA___512_SASL_JAAS_CONFIG: >-
+              org.apache.kafka.common.security.scram.ScramLoginModule required 
+              username="kafka" 
+              password="kafka-secret";
       KAFKA_LISTENER_NAME_EXTERNAL_SSL_KEYSTORE_LOCATION: /var/ssl/private/kafka3.kafka_network.keystore.jks
       KAFKA_LISTENER_NAME_EXTERNAL_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       KAFKA_LISTENER_NAME_EXTERNAL_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/kafka3.kafka_network.truststore.jks
@@ -696,10 +735,10 @@ services:
       CONFLUENT_METRICS_REPORTER_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       CONFLUENT_METRICS_REPORTER_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/kafka3.kafka_network.truststore.jks
       CONFLUENT_METRICS_REPORTER_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-      CONFLUENT_METRICS_REPORTER_SASL_MECHANISM: PLAIN
+      CONFLUENT_METRICS_REPORTER_SASL_MECHANISM: SCRAM-SHA-512
       CONFLUENT_METRICS_REPORTER_PUBLISH_MS: 30000
       CONFLUENT_METRICS_REPORTER_SASL_JAAS_CONFIG: >-
-              org.apache.kafka.common.security.plain.PlainLoginModule required 
+              org.apache.kafka.common.security.scram.ScramLoginModule required 
               username="kafka" 
               password="kafka-secret";
       # mds
@@ -776,7 +815,10 @@ services:
       #KAFKA_OPTS: '-Djavax.net.debug=ssl'
       #KAFKA_JMX_PORT: 9010
       #KAFKA_JMX_HOSTNAME: localhost
-      KAFKA_OPTS: "-Djava.security.auth.login.config=/etc/kafka/secrets/zoo-client-jaas.conf"
+      KAFKA_OPTS: >-
+          -Djava.security.auth.login.config=/etc/kafka/secrets/zoo-client-jaas.conf 
+          -Dzookeeper.sasl.client=true 
+          -Dzookeeper.sasl.client.username=kafka
     volumes:
       - ./volumes/kafka-3/data:/var/lib/kafka/data
       - ./volumes/kafka-3/logs:/var/log/kafka
@@ -786,7 +828,7 @@ services:
     networks:
       - kafka-network
     healthcheck:
-      test: ["CMD", "bash", "-c", "kafka-cluster cluster-id --bootstrap-server kafka3:29095 --config /etc/kafka/secrets/sasl-rbac-healthcheck.properties | grep -e 'Cluster ID: .*'"]
+      test: ["CMD", "bash", "-c", "kafka-cluster cluster-id --bootstrap-server kafka3:29095 --config /etc/kafka/secrets/scram-rbac-healthcheck.properties | grep -e 'Cluster ID: .*'"]
       start_period: 30s
       interval: 20s
       timeout: 10s
@@ -836,12 +878,12 @@ services:
       - -c
       - |
         cd /scripts
-        ./login.sh sasl
+        ./login.sh scram
         cd setup
-        ./create-admin-role-bindings.sh sasl User
-        ./create-schema-registry-role-bindings.sh sasl User
-        ./create-kafka-connect-role-bindings.sh sasl User
-        ./create-control-center-role-bindings.sh sasl User
+        ./create-admin-role-bindings.sh scram User
+        ./create-schema-registry-role-bindings.sh scram User
+        ./create-kafka-connect-role-bindings.sh scram User
+        ./create-control-center-role-bindings.sh scram User
         touch /tmp/initialized
         tail -f /dev/null
     volumes:
@@ -852,7 +894,7 @@ services:
     healthcheck:
       test: ["CMD", "bash", "-c", "find /tmp/initialized"]
       start_period: 30s
-      interval: 10s
+      interval: 20s
       timeout: 10s
       retries: 10
 
@@ -919,7 +961,7 @@ services:
       - kafka-network
     healthcheck:
       test: ["CMD", "bash", "-c", "curl -k -u schema:schema-secret https://schema1:8081/subjects"]
-      interval: 10s
+      interval: 20s
       timeout: 10s
       retries: 10
 
@@ -1002,24 +1044,10 @@ services:
       CONNECT_KEY_CONVERTER: io.confluent.connect.avro.AvroConverter
       CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: https://schema1:8081
       CONNECT_KEY_SUBJECT_NAME_STRATEGY: io.confluent.kafka.serializers.subject.RecordNameStrategy
-      #CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_SSL_KEYSTORE_LOCATION: '/var/ssl/private/connect1.kafka_network.keystore.jks'
-      #CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-      #CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_SSL_KEY_PASSWORD: ${KEYSTORE_PASSWORD}
-      #CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/connect1.kafka_network.truststore.jks'
-      #CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-      #CONNECT_KEY_CONVERTER_BASIC_AUTH_USER_INFO: 'connect:connect-secret'
-      #CONNECT_KEY_CONVERTER_HTTP_AUTH_CREDENTIALS_SOURCE: USER_INFO
       # value converter
       CONNECT_VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter
       CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: https://schema1:8081
       CONNECT_VALUE_SUBJECT_NAME_STRATEGY: io.confluent.kafka.serializers.subject.RecordNameStrategy
-      #CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_SSL_KEYSTORE_LOCATION: '/var/ssl/private/connect1.kafka_network.keystore.jks'
-      #CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-      #CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_SSL_KEY_PASSWORD: ${KEYSTORE_PASSWORD}
-      #CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/connect1.kafka_network.truststore.jks'
-      #CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-      #CONNECT_VALUE_CONVERTER_BASIC_AUTH_USER_INFO: 'connect:connect-secret'
-      #CONNECT_VALUE_CONVERTER_HTTP_AUTH_CREDENTIALS_SOURCE: 'USER_INFO'
       # internal converter
       CONNECT_INTERNAL_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
       CONNECT_INTERNAL_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
@@ -1028,54 +1056,11 @@ services:
       CONNECT_PRODUCER_ENABLE_IDEMPOTENCE: 'true'
       CONNECT_PRODUCER_BOOTSTRAP_SERVERS: lb:29092
       CONNECT_PRODUCER_SECURITY_PROTOCOL: SASL_SSL
-      CONNECT_PRODUCER_SASL_MECHANISM: PLAIN
-      #CONNECT_PRODUCER_SASL_LOGIN_CALLBACK_HANDLER_CLASS: io.confluent.kafka.clients.plugins.auth.token.TokenUserLoginCallbackHandler
-      #CONNECT_PRODUCER_CONFLUENT_MONITORING_INTERCEPTOR_SASL_MECHANISM: OAUTHBEARER
-      #CONNECT_PRODUCER_CONFLUENT_MONITORING_INTERCEPTOR_SASL_LOGIN_CALLBACK_HANDLER_CLASS: io.confluent.kafka.clients.plugins.auth.token.TokenUserLoginCallbackHandler
-      #CONNECT_PRODUCER_CONFLUENT_MONITORING_INTERCEPTOR_SASL_JAAS_CONFIG: |
-      #        org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required \
-      #        metadataServerUrls="https://kafka1:8091,https://kafka2:8092,https://kafka3:8093" \
-      #        username="connect" \
-      #        password="connect-secret";
-      #CONNECT_PRODUCER_SSL_KEYSTORE_LOCATION: '/var/ssl/private/connect1.kafka_network.keystore.jks'
-      #CONNECT_PRODUCER_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-      #CONNECT_PRODUCER_SSL_KEY_PASSWORD: ${KEYSTORE_PASSWORD}
-      #CONNECT_PRODUCER_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/connect1.kafka_network.truststore.jks'
-      #CONNECT_PRODUCER_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+      CONNECT_PRODUCER_SASL_MECHANISM: SCRAM-SHA-512
       # consumer
       CONNECT_CONSUMER_BOOTSTRAP_SERVERS: lb:29092
       CONNECT_CONSUMER_SECURITY_PROTOCOL: SASL_SSL
-      CONNECT_CONSUMER_SASL_MECHANISM: PLAIN
-      #CONNECT_CONSUMER_SASL_LOGIN_CALLBACK_HANDLER_CLASS: io.confluent.kafka.clients.plugins.auth.token.TokenUserLoginCallbackHandler
-      #CONNECT_CONSUMER_CONFLUENT_MONITORING_INTERCEPTOR_SASL_MECHANISM: OAUTHBEARER
-      #CONNECT_CONSUMER_CONFLUENT_MONITORING_INTERCEPTOR_SASL_LOGIN_CALLBACK_HANDLER_CLASS: io.confluent.kafka.clients.plugins.auth.token.TokenUserLoginCallbackHandler
-      #CONNECT_CONSUMER_CONFLUENT_MONITORING_INTERCEPTOR_SASL_JAAS_CONFIG: |
-      #        org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required \
-      #        metadataServerUrls="https://kafka1:8091,https://kafka2:8092,https://kafka3:8093" \
-      #        username="connect" \
-      #        password="connect-secret";
-      #CONNECT_CONSUMER_SSL_KEYSTORE_LOCATION: '/var/ssl/private/connect1.kafka_network.keystore.jks'
-      #CONNECT_CONSUMER_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-      #CONNECT_CONSUMER_SSL_KEY_PASSWORD: ${KEYSTORE_PASSWORD}
-      #CONNECT_CONSUMER_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/connect1.kafka_network.truststore.jks'
-      #CONNECT_CONSUMER_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-      # admin
-      #CONNECT_ADMIN_BOOTSTRAP_SERVERS: lb:9092
-      #CONNECT_ADMIN_SECURITY_PROTOCOL: SASL_SSL
-      #CONNECT_ADMIN_SASL_MECHANISM: PLAIN
-      #CONNECT_ADMIN_SASL_LOGIN_CALLBACK_HANDLER_CLASS: io.confluent.kafka.clients.plugins.auth.token.TokenUserLoginCallbackHandler
-      #CONNECT_ADMIN_CONFLUENT_MONITORING_INTERCEPTOR_SASL_MECHANISM: OAUTHBEARER
-      #CONNECT_ADMIN_CONFLUENT_MONITORING_INTERCEPTOR_SASL_LOGIN_CALLBACK_HANDLER_CLASS: io.confluent.kafka.clients.plugins.auth.token.TokenUserLoginCallbackHandler
-      #CONNECT_ADMIN_CONFLUENT_MONITORING_INTERCEPTOR_SASL_JAAS_CONFIG: |
-      #        org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required \
-      #        metadataServerUrls="https://kafka1:8091,https://kafka2:8092,https://kafka3:8093" \
-      #        username="connect" \
-      #        password="connect-secret";
-      #CONNECT_ADMIN_SSL_KEYSTORE_LOCATION: '/var/ssl/private/connect1.kafka_network.keystore.jks'
-      #CONNECT_ADMIN_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-      #CONNECT_ADMIN_SSL_KEY_PASSWORD: ${KEYSTORE_PASSWORD}
-      #CONNECT_ADMIN_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/connect1.kafka_network.truststore.jks'
-      #CONNECT_ADMIN_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+      CONNECT_CONSUMER_SASL_MECHANISM: SCRAM-SHA-512
       # secret registry
       CONNECT_CONFIG_PROVIDERS: 'secret'
       CONNECT_CONFIG_PROVIDERS_SECRET_CLASS: 'io.confluent.connect.secretregistry.rbac.config.provider.InternalSecretConfigProvider'
@@ -1119,7 +1104,7 @@ services:
       - kafka-network
     healthcheck:
       test: ["CMD", "bash", "-c", "curl -k -u connect:connect-secret https://connect1:8083/connectors"]
-      interval: 10s
+      interval: 20s
       timeout: 10s
       retries: 10
 

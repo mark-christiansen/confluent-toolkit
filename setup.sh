@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # env from user input
-ENVS=("mtls-acl" "sasl-rbac")
+ENVS=("mtls-acl" "sasl-rbac" "scram-rbac")
 [[ -z "$1" ]] && { echo "Environment (${ENVS[@]}) not specified" ; exit 1; }
 [[ ! " ${ENVS[@]} " =~ " $1 " ]] && { echo "Invalid environment $1 specified. Valid envs are (${ENVS[@]})." ; exit 1; }
 ENV=$1
@@ -46,6 +46,8 @@ docker-compose -f confluent-platform-$ENV.yml up -d
 ROLE=""
 if [[ $ENV == "sasl-rbac" ]]; then
   ROLE="sasl"
+elif [[ $ENV == "scram-rbac" ]]; then
+  ROLE="scram"
 elif [[ $ENV == "mtls-acl" ]]; then
   ROLE="mtls"
 fi

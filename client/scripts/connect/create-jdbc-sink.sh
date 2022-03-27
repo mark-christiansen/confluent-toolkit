@@ -68,6 +68,13 @@ if [[ $SSL == "true" ]]; then
 
   if [[ $SASL == "true" ]]; then
 
+    SASL_MECHANISM="PLAIN"
+    SASL_MODULE="org.apache.kafka.common.security.plain.PlainLoginModule"
+    if [[ $ENV == "scram" ]]; then
+      SASL_MECHANISM="SCRAM-SHA-256"
+      SASL_MODULE="org.apache.kafka.common.security.scram.ScramLoginModule"
+    fi
+
     echo "Creating jdbcsink connector secrets"
     # create username secret
     HTTP_CODE=$(curl -k $BASIC_AUTH --header "Content-Type: application/json" -X POST --data "{\"secret\": \"$PRINCIPAL\"}" --write-out "%{http_code}" \
@@ -143,16 +150,16 @@ if [[ $SSL == "true" ]]; then
     "value.converter.schema.registry.basic.auth.user.info": "\${secret:jdbcsink:username}:\${secret:jdbcsink:password}",
     "value.converter.schema.registry.basic.auth.credentials.source": "USER_INFO",
     "consumer.override.group.id": "$GROUP",
-    "consumer.override.sasl.mechanism": "PLAIN",
-    "consumer.override.sasl.jaas.config": "org.apache.kafka.common.security.plain.PlainLoginModule required username=\"\${secret:jdbcsink:username}\" password=\"\${secret:jdbcsink:password}\";",
+    "consumer.override.sasl.mechanism": "$SASL_MECHANISM",
+    "consumer.override.sasl.jaas.config": "$SASL_MODULE required username=\"\${secret:jdbcsink:username}\" password=\"\${secret:jdbcsink:password}\";",
     "consumer.override.ssl.keystore.location": "$KEYSTORE_LOCATION",
     "consumer.override.ssl.keystore.password": "\${secret:jdbcsink:keypassword}",
     "consumer.override.ssl.key.password": "\${secret:jdbcsink:keypassword}",
     "consumer.override.ssl.truststore.location": "$TRUSTSTORE_LOCATION",
     "consumer.override.ssl.truststore.password": "\${secret:jdbcsink:keypassword}",
     "producer.override.client.id": "jdbcsink-producer",
-    "producer.override.sasl.mechanism": "PLAIN",
-    "producer.override.sasl.jaas.config": "org.apache.kafka.common.security.plain.PlainLoginModule required username=\"\${secret:jdbcsink:username}\" password=\"\${secret:jdbcsink:password}\";",
+    "producer.override.sasl.mechanism": "$SASL_MECHANISM",
+    "producer.override.sasl.jaas.config": "$SASL_MODULE required username=\"\${secret:jdbcsink:username}\" password=\"\${secret:jdbcsink:password}\";",
     "producer.override.ssl.keystore.location": "$KEYSTORE_LOCATION",
     "producer.override.ssl.keystore.password": "\${secret:jdbcsink:keypassword}",
     "producer.override.ssl.key.password": "\${secret:jdbcsink:keypassword}",

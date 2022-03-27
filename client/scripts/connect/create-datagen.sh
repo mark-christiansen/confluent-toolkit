@@ -17,7 +17,7 @@ PRINCIPAL="datagen"
 if [[ $RBAC == "true" ]]; then
 
   # login to cluster
-  ../login.sh $1
+  ../login.sh $ENV
 
   CLUSTER_ID=$(kafka-cluster cluster-id --bootstrap-server $BROKER_URL --config $KAFKA_CONFIG | sed -n "s/^Cluster ID: \(.*\)$/\1/p")
   [[ -z "$CLUSTER_ID" ]] && { echo "Kafka cluster ID could not be found" ; exit 1; }
@@ -62,6 +62,13 @@ if [[ $SSL == "true" ]]; then
   PASSWORD="datagen-secret"
 
   if [[ $SASL == "true" ]]; then
+
+    SASL_MECHANISM="PLAIN"
+    SASL_MODULE="org.apache.kafka.common.security.plain.PlainLoginModule"
+    if [[ $ENV == "scram" ]]; then
+      SASL_MECHANISM="SCRAM-SHA-256"
+      SASL_MODULE="org.apache.kafka.common.security.scram.ScramLoginModule"
+    fi
 
     echo "Creating datagen connector secrets"
     # create username secret
@@ -115,8 +122,8 @@ if [[ $SSL == "true" ]]; then
     "producer.override.ssl.key.password": "\${secret:datagen:keypassword}",
     "producer.override.ssl.truststore.location": "$TRUSTSTORE_LOCATION",
     "producer.override.ssl.truststore.password": "\${secret:datagen:keypassword}",
-    "producer.override.sasl.mechanism": "PLAIN",
-    "producer.override.sasl.jaas.config": "org.apache.kafka.common.security.plain.PlainLoginModule required username=\"\${secret:datagen:username}\" password=\"\${secret:datagen:password}\";"
+    "producer.override.sasl.mechanism": "$SASL_MECHANISM",
+    "producer.override.sasl.jaas.config": "$SASL_MODULE required username=\"\${secret:datagen:username}\" password=\"\${secret:datagen:password}\";"
   }
 }
 EOF

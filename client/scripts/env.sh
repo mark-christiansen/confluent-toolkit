@@ -181,6 +181,40 @@ sasl_client_local() {
     export KAFKA_CONNECT_URL="https://localhost:8083"
 }
 
+scram() {
+    echo "Setting \"scram\" environment variables"
+    export SSL="true"
+    export RBAC="true"
+    export SASL="true"
+    export BROKER_URL="lb:29092"
+    export KAFKA_CONFIG="/scripts/config/scram.config"
+    export KEYSTORE_DIR="/var/ssl/private"
+    export KEYSTORE_PASSWORD="serverpassword"
+    export ZOO1_URL="zoo1:2181"
+    export ZOO2_URL="zoo2:2182"
+    export ZOO3_URL="zoo3:2183"
+    export SCHEMA_URL="https://schema1:8081"
+    export MDS_URL="https://kafka1:8091"
+    export KAFKA_CONNECT_URL="https://connect1:8083"
+}
+
+scram_local() {
+    echo "Setting \"scram_local\" environment variables"
+    export SSL="true"
+    export RBAC="true"
+    export SASL="true"
+    export BROKER_URL="localhost:9092"
+    export KAFKA_CONFIG="../config/scram_local.config"
+    export KEYSTORE_DIR="../../../certs"
+    export KEYSTORE_PASSWORD="serverpassword"
+    export ZOO1_URL="localhost:2181"
+    export ZOO2_URL="localhost:2182"
+    export ZOO3_URL="localhost:2183"
+    export SCHEMA_URL="https://localhost:8081"
+    export MDS_URL="https://localhost:8091"
+    export KAFKA_CONNECT_URL="https://localhost:8083"
+}
+
 # env from user input
 [[ -z "$1" ]] && { echo "Environment not specified" ; exit 1; }
 declare -a ENV=$1

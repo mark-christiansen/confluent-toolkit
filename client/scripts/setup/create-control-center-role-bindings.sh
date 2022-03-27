@@ -21,7 +21,6 @@ MONITOR_TOPIC="_confluent-monitoring"
 METRICS_TOPIC="_confluent-metrics"
 COMMAND_TOPIC="_confluent-command"
 C3_TOPIC="_confluent-controlcenter"
-GROUP="_confluent-controlcenter"
 
 # get the kafka cluster ID
 CLUSTER_ID=$(kafka-cluster cluster-id --bootstrap-server $BROKER_URL --config $KAFKA_CONFIG | sed -n "s/^Cluster ID: \(.*\)$/\1/p")
@@ -36,7 +35,11 @@ confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role Resour
 --prefix --kafka-cluster-id $CLUSTER_ID
 confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role ResourceOwner --resource Topic:$C3_TOPIC \
 --prefix --kafka-cluster-id $CLUSTER_ID
-confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role ResourceOwner --resource Group:$GROUP --prefix \
+confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role ResourceOwner --resource Group:_confluent-controlcenter --prefix \
 --kafka-cluster-id $CLUSTER_ID
+#confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role DeveloperRead --resource Group:* --kafka-cluster-id $CLUSTER_ID
+confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role ClusterAdmin --kafka-cluster-id $CLUSTER_ID
+confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role AuditAdmin --kafka-cluster-id $CLUSTER_ID
+confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role Operator --kafka-cluster-id $CLUSTER_ID
 
 echo "Created RBAC roles for control center"

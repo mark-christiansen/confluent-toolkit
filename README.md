@@ -6,6 +6,7 @@ This project is used to launch, test and teardown different Confluent Platform e
 
 - Confluent Platform Enterprise with mTLS authentication and ACL authorization (env=mtls-acl)
 - Confluent Platform Enterprise with SASL Plain authentication and RBAC authorization (env=sasl-rbac)
+- Confluent Platform Enterprise with SASL SCRAM SHA-512 authentication and RBAC authorization (env=scram-rbac)
 
 ## Requirements
 
@@ -62,6 +63,26 @@ against an Open LDAP server. The schema registry server and Kafka Connect worker
 and Kafka Connect have basic authentication enabled and RBAC is enabled on both. This means prinicpals will need to have role bindings created to access subjects in schema registry 
 and to create connectors in Kafka Connect. Principals will also need role bindings to read/write/create topics and consume using consumer groups. Two connectors, Datagen Connector 
 and JDBC Sink Connector, are setup by default and demonstrate the role bindings needed for their principals.
+
+This environment uses plain authentication to the brokers, so the broker clients need to have usernames/passwords in the JAAS config for the broker listener. Authentication to 
+Zookeeper is Digest Authentication.
+
+If you want to verify your environment is working correctly, you can open up a connection to the Postgres server on "localhost:5432" running in Docker and verify that there is a 
+table created in the "public" schema called "person" which should be populated with records. This table is populated by the JDBC Sink Connector from a topic populated by the 
+Datagen Connector.
+
+## Environment: SASL SCRAM SHA-512 authentication and RBAC authorization
+
+This environment is a three broker, three zookeeper cluster of Confluent Platform Enterprise with one schema registry server and one Kafka Connect worker. SSL is enabled for all
+communication between zookeeper servers, brokers and between components and brokers (so basically everywhere). MDS is running on the brokers and RBAC is enabled for authorization 
+against an Open LDAP server. The schema registry server and Kafka Connect worker are authenticating against the OAuth token listener on the brokers. The REST API for schema registry 
+and Kafka Connect have basic authentication enabled and RBAC is enabled on both. This means prinicpals will need to have role bindings created to access subjects in schema registry 
+and to create connectors in Kafka Connect. Principals will also need role bindings to read/write/create topics and consume using consumer groups. Two connectors, Datagen Connector 
+and JDBC Sink Connector, are setup by default and demonstrate the role bindings needed for their principals.
+
+This environment uses SCRAM SHA-512 for authentication to brokers, which means the usernames and passwords for the broker clients (and all components) are stored in Zookeeper
+as Kafka configs for "user" data in Zookeeper. Because the Kafka user is a SCRAM user as well, there is a jumphost called "scram-client" that is used to deploy SRAM user data to
+Zookeeper before the brokers are brought up. Authentication to Zookeeper is Digest Authentication.
 
 If you want to verify your environment is working correctly, you can open up a connection to the Postgres server on "localhost:5432" running in Docker and verify that there is a 
 table created in the "public" schema called "person" which should be populated with records. This table is populated by the JDBC Sink Connector from a topic populated by the 
