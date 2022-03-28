@@ -236,13 +236,10 @@ services:
       KAFKA_LISTENER_NAME_INTERNAL_SASL_MECHANISM: PLAIN
       KAFKA_LISTENER_NAME_INTERNAL_SASL_ENABLED_MECHANISMS: PLAIN
       KAFKA_LISTENER_NAME_INTERNAL_PLAIN_SASL_JAAS_CONFIG: >-
-              org.apache.kafka.common.security.plain.PlainLoginModule required 
+              org.apache.kafka.common.security.plain.PlainLoginModule required
               username="kafka" 
-              password="kafka-secret" 
-              user_kafka="kafka-secret"
-              user_client="client-secret"
-              user_datagen="datagen-secret" 
-              user_jdbcsink="jdbcsink-secret";
+              password="kafka-secret";
+      KAFKA_LISTENER_NAME_INTERNAL_PLAIN_SASL_SERVER_CALLBACK_HANDLER_CLASS: io.confluent.security.auth.provider.ldap.LdapAuthenticateCallbackHandler
       KAFKA_LISTENER_NAME_INTERNAL_SSL_KEYSTORE_LOCATION: /var/ssl/private/kafka1.kafka_network.keystore.jks
       KAFKA_LISTENER_NAME_INTERNAL_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       KAFKA_LISTENER_NAME_INTERNAL_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/kafka1.kafka_network.truststore.jks
@@ -251,10 +248,8 @@ services:
       # external listener
       KAFKA_LISTENER_NAME_EXTERNAL_SASL_MECHANISM: PLAIN
       KAFKA_LISTENER_NAME_EXTERNAL_SASL_ENABLED_MECHANISMS: PLAIN
-      KAFKA_LISTENER_NAME_EXTERNAL_PLAIN_SASL_JAAS_CONFIG: >-
-              org.apache.kafka.common.security.plain.PlainLoginModule required 
-              user_admin="admin-secret" 
-              user_client="client-secret";
+      KAFKA_LISTENER_NAME_EXTERNAL_PLAIN_SASL_JAAS_CONFIG: org.apache.kafka.common.security.plain.PlainLoginModule required;
+      KAFKA_LISTENER_NAME_EXTERNAL_PLAIN_SASL_SERVER_CALLBACK_HANDLER_CLASS: io.confluent.security.auth.provider.ldap.LdapAuthenticateCallbackHandler
       KAFKA_LISTENER_NAME_EXTERNAL_SSL_KEYSTORE_LOCATION: /var/ssl/private/kafka1.kafka_network.keystore.jks
       KAFKA_LISTENER_NAME_EXTERNAL_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       KAFKA_LISTENER_NAME_EXTERNAL_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/kafka1.kafka_network.truststore.jks
@@ -436,13 +431,10 @@ services:
       KAFKA_LISTENER_NAME_INTERNAL_SASL_MECHANISM: PLAIN
       KAFKA_LISTENER_NAME_INTERNAL_SASL_ENABLED_MECHANISMS: PLAIN
       KAFKA_LISTENER_NAME_INTERNAL_PLAIN_SASL_JAAS_CONFIG: >-
-              org.apache.kafka.common.security.plain.PlainLoginModule required 
+              org.apache.kafka.common.security.plain.PlainLoginModule required
               username="kafka" 
-              password="kafka-secret" 
-              user_kafka="kafka-secret"
-              user_client="client-secret"
-              user_datagen="datagen-secret" 
-              user_jdbcsink="jdbcsink-secret";
+              password="kafka-secret";
+      KAFKA_LISTENER_NAME_INTERNAL_PLAIN_SASL_SERVER_CALLBACK_HANDLER_CLASS: io.confluent.security.auth.provider.ldap.LdapAuthenticateCallbackHandler
       KAFKA_LISTENER_NAME_INTERNAL_SSL_KEYSTORE_LOCATION: /var/ssl/private/kafka2.kafka_network.keystore.jks
       KAFKA_LISTENER_NAME_INTERNAL_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       KAFKA_LISTENER_NAME_INTERNAL_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/kafka2.kafka_network.truststore.jks
@@ -451,10 +443,8 @@ services:
       # external listener
       KAFKA_LISTENER_NAME_EXTERNAL_SASL_MECHANISM: PLAIN
       KAFKA_LISTENER_NAME_EXTERNAL_SASL_ENABLED_MECHANISMS: PLAIN
-      KAFKA_LISTENER_NAME_EXTERNAL_PLAIN_SASL_JAAS_CONFIG: >-
-              org.apache.kafka.common.security.plain.PlainLoginModule required 
-              user_admin="admin-secret" 
-              user_client="client-secret";
+      KAFKA_LISTENER_NAME_EXTERNAL_PLAIN_SASL_JAAS_CONFIG: org.apache.kafka.common.security.plain.PlainLoginModule required;
+      KAFKA_LISTENER_NAME_EXTERNAL_PLAIN_SASL_SERVER_CALLBACK_HANDLER_CLASS: io.confluent.security.auth.provider.ldap.LdapAuthenticateCallbackHandler
       KAFKA_LISTENER_NAME_EXTERNAL_SSL_KEYSTORE_LOCATION: /var/ssl/private/kafka2.kafka_network.keystore.jks
       KAFKA_LISTENER_NAME_EXTERNAL_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       KAFKA_LISTENER_NAME_EXTERNAL_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/kafka2.kafka_network.truststore.jks
@@ -638,13 +628,10 @@ services:
       KAFKA_LISTENER_NAME_INTERNAL_SASL_MECHANISM: PLAIN
       KAFKA_LISTENER_NAME_INTERNAL_SASL_ENABLED_MECHANISMS: PLAIN
       KAFKA_LISTENER_NAME_INTERNAL_PLAIN_SASL_JAAS_CONFIG: >-
-              org.apache.kafka.common.security.plain.PlainLoginModule required 
+              org.apache.kafka.common.security.plain.PlainLoginModule required
               username="kafka" 
-              password="kafka-secret" 
-              user_kafka="kafka-secret"
-              user_client="client-secret"
-              user_datagen="datagen-secret" 
-              user_jdbcsink="jdbcsink-secret";
+              password="kafka-secret";
+      KAFKA_LISTENER_NAME_INTERNAL_PLAIN_SASL_SERVER_CALLBACK_HANDLER_CLASS: io.confluent.security.auth.provider.ldap.LdapAuthenticateCallbackHandler
       KAFKA_LISTENER_NAME_INTERNAL_SSL_KEYSTORE_LOCATION: /var/ssl/private/kafka3.kafka_network.keystore.jks
       KAFKA_LISTENER_NAME_INTERNAL_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       KAFKA_LISTENER_NAME_INTERNAL_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/kafka3.kafka_network.truststore.jks
@@ -653,10 +640,8 @@ services:
       # external listener
       KAFKA_LISTENER_NAME_EXTERNAL_SASL_MECHANISM: PLAIN
       KAFKA_LISTENER_NAME_EXTERNAL_SASL_ENABLED_MECHANISMS: PLAIN
-      KAFKA_LISTENER_NAME_EXTERNAL_PLAIN_SASL_JAAS_CONFIG: >-
-              org.apache.kafka.common.security.plain.PlainLoginModule required 
-              user_admin="admin-secret" 
-              user_client="client-secret";
+      KAFKA_LISTENER_NAME_EXTERNAL_PLAIN_SASL_JAAS_CONFIG: org.apache.kafka.common.security.plain.PlainLoginModule required;
+      KAFKA_LISTENER_NAME_EXTERNAL_PLAIN_SASL_SERVER_CALLBACK_HANDLER_CLASS: io.confluent.security.auth.provider.ldap.LdapAuthenticateCallbackHandler
       KAFKA_LISTENER_NAME_EXTERNAL_SSL_KEYSTORE_LOCATION: /var/ssl/private/kafka3.kafka_network.keystore.jks
       KAFKA_LISTENER_NAME_EXTERNAL_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       KAFKA_LISTENER_NAME_EXTERNAL_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/kafka3.kafka_network.truststore.jks
