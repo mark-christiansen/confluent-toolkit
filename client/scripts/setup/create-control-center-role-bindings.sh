@@ -41,5 +41,6 @@ confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role Resour
 confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role ClusterAdmin --kafka-cluster-id $CLUSTER_ID
 confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role AuditAdmin --kafka-cluster-id $CLUSTER_ID
 confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role Operator --kafka-cluster-id $CLUSTER_ID
+confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role SystemAdmin --kafka-cluster-id $CLUSTER_ID
 
 echo "Created RBAC roles for control center"

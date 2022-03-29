@@ -4,7 +4,7 @@ uid: datagen
 sn: Datagen Connector
 userpassword: datagen-secret
 description: datagen user
-objectclass: inetorgperson
+objectClass: inetOrgPerson
 
 
 dn: cn=datagens,ou=groups,{{ LDAP_BASE_DN }}

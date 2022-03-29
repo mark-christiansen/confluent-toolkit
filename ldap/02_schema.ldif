@@ -4,7 +4,7 @@ uid: schema
 sn: Schema Registry
 userpassword: schema-secret
 description: schema user
-objectclass: inetorgperson
+objectClass: inetOrgPerson
 
 
 dn: cn=schemas,ou=groups,{{ LDAP_BASE_DN }}

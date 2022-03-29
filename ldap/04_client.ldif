@@ -4,7 +4,7 @@ uid: client
 sn: Kafka Client
 userpassword: client-secret
 description: client user
-objectclass: inetorgperson
+objectClass: inetOrgPerson
 
 
 dn: cn=clients,ou=groups,{{ LDAP_BASE_DN }}

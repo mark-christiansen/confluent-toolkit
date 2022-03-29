@@ -4,7 +4,7 @@ uid: admin
 sn: Kafka Administrator
 userpassword: admin-secret
 description: admin user
-objectclass: inetorgperson
+objectClass: inetOrgPerson
 
 
 dn: cn=admins,ou=groups,{{ LDAP_BASE_DN }}
