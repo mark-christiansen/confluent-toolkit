@@ -1137,15 +1137,9 @@ services:
     container_name: c3
     hostname: c3
     links:
-      - kafka1
-      - kafka2
-      - kafka3
+      - client
     depends_on:
-      kafka1:
-        condition: service_healthy
-      kafka2:
-        condition: service_healthy
-      kafka3:
+      client:
         condition: service_healthy
     ports:
       - 9021:9021
@@ -1153,8 +1147,13 @@ services:
       CUB_CLASSPATH: '/usr/share/java/confluent-control-center/*:/usr/share/java/rest-utils/*:/usr/share/java/confluent-common/*:/usr/share/java/confluent-security/kafka-rest/*:/usr/share/java/kafka-rest/:/usr/share/java/cp-base-new/*'
       PORT: 9021
       CONTROL_CENTER_DATA_DIR: /var/lib/c3/data
-      CONTROL_CENTER_BOOTSTRAP_SERVERS: lb:19092
       CONTROL_CENTER_ZOOKEEPER_CONNECT: zoo1:2181,zoo2:2182,zoo3:2183
+      CONTROL_CENTER_BOOTSTRAP_SERVERS: lb:19092
+      #CONTROL_CENTER_SSL_KEYSTORE_LOCATION: /var/ssl/private/c3.kafka_network.keystore.jks
+      #CONTROL_CENTER_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+      #CONTROL_CENTER_SSL_KEY_PASSWORD: ${KEYSTORE_PASSWORD}
+      #CONTROL_CENTER_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/c3.kafka_network.truststore.jks
+      #CONTROL_CENTER_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       # streams connection
       CONTROL_CENTER_STREAMS_SECURITY_PROTOCOL: SASL_SSL
       # streams encryption
@@ -1222,33 +1221,28 @@ services:
       CONTROL_CENTER_REST_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       CONTROL_CENTER_REST_SSL_CIPHER_SUITES: ${SSL_CIPHER_SUITES}
       # Control Center UI Authentication
-      CONTROL_CENTER_REST_AUTHENTICATION_METHOD: BASIC
-      CONTROL_CENTER_REST_AUTHENTICATION_REALM: c3
-      CONTROL_CENTER_REST_AUTHENTICATION_ROLES: Administrators,Restricted
-      CONTROL_CENTER_AUTH_RESTRICTED_ROLES: Restricted
+      CONTROL_CENTER_REST_AUTHENTICATION_METHOD: BEARER
       CONTROL_CENTER_AUTH_SESSION_EXPIRATION_MS: 60000
       # Connect
-      #CONTROL_CENTER_CONNECT_CONNECT1_CLUSTER: https://connect1:8083
-      #CONTROL_CENTER_CONNECT_CONNECT1_CLUSTER_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/c3.kafka_network.truststore.jks'
-      #CONTROL_CENTER_CONNECT_CONNECT1_CLUSTER_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-      #CONTROL_CENTER_CONNECT_CONNECT1_CLUSTER_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/c3.kafka_network.keystore.jks'
-      #CONTROL_CENTER_CONNECT_CONNECT1_CLUSTER_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+      CONTROL_CENTER_CONNECT_DOCKER___CONNECT___CLUSTER_CLUSTER: https://connect1:8083
       # Schema Registry
-      CONTROL_CENTER_SCHEMA_REGISTRY_SCHEMA_REGISTRY_URL: https://schema1:8081
-      CONTROL_CENTER_SCHEMA_REGISTRY_SCHEMA_REGISTRY_SCHEMA_REGISTRY_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/c3.kafka_network.truststore.jks
-      CONTROL_CENTER_SCHEMA_REGISTRY_SCHEMA_REGISTRY_SCHEMA_REGISTRY_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-      CONTROL_CENTER_SCHEMA_REGISTRY_SCHEMA_REGISTRY_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/c3.kafka_network.keystore.jks
+      CONTROL_CENTER_SCHEMA_REGISTRY_URL: https://schema1:8081
+      CONTROL_CENTER_SCHEMA_REGISTRY_SCHEMA_REGISTRY_SSL_KEYSTORE_LOCATION: /var/ssl/private/c3.kafka_network.keystore.jks
+      CONTROL_CENTER_SCHEMA_REGISTRY_SCHEMA_REGISTRY_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+      CONTROL_CENTER_SCHEMA_REGISTRY_SCHEMA_REGISTRY_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/c3.kafka_network.truststore.jks
       CONTROL_CENTER_SCHEMA_REGISTRY_SCHEMA_REGISTRY_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       # RBAC
-      CONTROL_CENTER_REST_AUTHENTICATION_METHOD: BEARER
       PUBLIC_KEY_PATH: /var/ssl/private/token_crt.pem
       # Used by Control Center to connect to MDS to verify tokens and authenticate clients
       CONFLUENT_METADATA_BOOTSTRAP_SERVER_URLS: https://kafka1:8091,https://kafka2:8092,https://kafka3:8093
+      CONFLUENT_METADATA_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/c3.kafka_network.truststore.jks
+      CONFLUENT_METADATA_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+      CONFLUENT_METADATA_HTTP_AUTH_CREDENTIALS_PROVIDER: BASIC
       CONFLUENT_METADATA_BASIC_AUTH_USER_INFO: c3:c3-secret
       # Used by Control Center to connect to the Admin API for Self Balancing Clusters
       CONTROL_CENTER_STREAMS_CPREST_URL: "https://kafka1:8091,https://kafka2:8092,https://kafka3:8093"
       #KAFKA_OPTS: "-Djava.security.auth.login.config=/tmp/control-center-jaas.conf"
-      KAFKA_OPTS: "-Djava.security.auth.login.config=/etc/kafka/secrets/c3-server-jaas.conf"
+      #KAFKA_OPTS: "-Djava.security.auth.login.config=/etc/kafka/secrets/c3-server-jaas.conf"
       #CONTROL_CENTER_LOG4J_ROOT_LOGLEVEL: "TRACE"
     volumes:
       - ./volumes/c3/data:/var/lib/c3/data

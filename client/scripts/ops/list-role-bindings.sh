@@ -13,6 +13,7 @@ FILTER="--role $3"
 if [[ $TYPE == "Principal" ]]; then
   FILTER="--principal $3"
 fi
+echo $FILTER
 
 # get the kafka cluster ID
 CLUSTER_ID=$(kafka-cluster cluster-id --bootstrap-server $BROKER_URL --config $KAFKA_CONFIG | sed -n "s/^Cluster ID: \(.*\)$/\1/p")

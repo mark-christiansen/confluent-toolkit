@@ -215,6 +215,23 @@ scram_local() {
     export KAFKA_CONNECT_URL="https://localhost:8083"
 }
 
+token() {
+    echo "Setting \"token\" environment variables"
+    export SSL="true"
+    export RBAC="true"
+    export SASL="true"
+    export BROKER_URL="lb:19092"
+    export KAFKA_CONFIG="/scripts/config/token.config"
+    export KEYSTORE_DIR="/var/ssl/private"
+    export KEYSTORE_PASSWORD="serverpassword"
+    export ZOO1_URL="zoo1:2181"
+    export ZOO2_URL="zoo2:2182"
+    export ZOO3_URL="zoo3:2183"
+    export SCHEMA_URL="https://schema1:8081"
+    export MDS_URL="https://kafka1:8091"
+    export KAFKA_CONNECT_URL="https://connect1:8083"
+}
+
 # env from user input
 [[ -z "$1" ]] && { echo "Environment not specified" ; exit 1; }
 declare -a ENV=$1

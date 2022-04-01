@@ -24,4 +24,10 @@ echo "Retrieved Kafka cluster ID: $CLUSTER_ID"
 
 confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role SystemAdmin --kafka-cluster-id $CLUSTER_ID
 
+SCHEMA_CLUSTER="schema-registry"
+confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role SystemAdmin --kafka-cluster-id $CLUSTER_ID --schema-registry-cluster-id $SCHEMA_CLUSTER
+
+CONNECT_CLUSTER="docker-connect-cluster"
+confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role SystemAdmin --kafka-cluster-id $CLUSTER_ID --connect-cluster-id $CONNECT_CLUSTER
+
 echo "Created RBAC roles for admin clients"
