@@ -3,7 +3,7 @@
 BASE=$(dirname "$0")
 cd ${BASE}
 . ../env.sh $1
-[ $? -eq 1 ] && echo "could not setup environment variables" && exit
+[ $? -eq 1 ] && echo "Could not setup environment variables" && exit
 
 [[ -z "$2" ]] && { echo "Topic not specified" ; exit 1; }
 TOPIC=$2
@@ -18,15 +18,17 @@ MSGS=$4 # messages per consumer thread
 THREADS=$5
 [[ $THREADS > 10 ]] && { echo "Threads cannot be greater than 10" ; exit 1; }
 
+LOG_DIR="/tmp/perf"
+
 # create directory to log to
-mkdir -p /tmp/logs
+mkdir -p $LOG_DIR
 
 echo "Starting consumer performance test"
 echo "Launching $THREADS consumer performance threads"
 pids=()
 for i in $(seq $THREADS); do
   kafka-consumer-perf-test --consumer.config $KAFKA_CONFIG --bootstrap-server $BROKER_URL --group $GROUP --topic $TOPIC \
-  --messages $MSGS --show-detailed-stats --print-metrics > /tmp/logs/consumer-$i-perf.log 2>&1 &
+  --messages $MSGS --show-detailed-stats --print-metrics > $LOG_DIR/consumer-$i-perf.log 2>&1 &
   pids[${i}]=$!
 done
 

@@ -7,7 +7,7 @@ objectClass: organizationalRole
 cn: rest
 
 # add user to LDAP
-ldapadd -x -D "cn=mds,dc=mycompany,dc=com" -w 'mds-secret' -f 01_kafka.ldif
+ldapadd -x -D "cn=admin,dc=mycompany,dc=com" -w 'admin-secret' -f /tmp/test.ldif
 
 # search LDAP
 ldapsearch -LLL -x -b 'ou=users,dc=mycompany,dc=com' -D "cn=mds,dc=mycompany,dc=com" -w 'mds-secret'
@@ -29,7 +29,7 @@ dn: cn=connectadmin,ou=groups,dc=tgs,dc=com
 objectClass: top
 objectClass: posixGroup
 
-# ldapadd -x -W -D "cn=ramesh,dc=tgs,dc=com" -f group1.ldif
+# ldapadd -x -W -D "cn=admin,dc=mycompany,dc=com" -w 'admin-secret' -f group1.ldif
 Enter LDAP Password:
 adding new entry "cn=dbagrp,ou=groups,dc=tgs,dc=com"
 
@@ -39,6 +39,6 @@ changetype: modify
 add: membercn
 member: kafka
 
-ldapmodify -x -D "cn=mds,dc=mycompany,dc=com" -w 'mds-secret' -f /tmp/test.ldif
+ldapmodify -x -D "cn=admin,dc=mycompany,dc=com" -w 'admin-secret' -f /tmp/test.ldif
 
 ldappasswd -x -D "cn=james,dc=mycompany,dc=com" -w james-secret -a james-secret -S

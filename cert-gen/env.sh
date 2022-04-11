@@ -14,6 +14,7 @@ declare -a MACHINES=(
 	"kafka4.${PRIVATE_DOMAIN}" "kafka5.${PRIVATE_DOMAIN}" "kafka6.${PRIVATE_DOMAIN}"
 	"schema1.${PRIVATE_DOMAIN}" "schema2.${PRIVATE_DOMAIN}" "schema3.${PRIVATE_DOMAIN}" 
 	"connect1.${PRIVATE_DOMAIN}" "connect2.${PRIVATE_DOMAIN}" "connect3.${PRIVATE_DOMAIN}" 
+	"ksql1.${PRIVATE_DOMAIN}" "kslq2.${PRIVATE_DOMAIN}" "ksql3.${PRIVATE_DOMAIN}" 
 	"lb.${PRIVATE_DOMAIN}" "c3.${PRIVATE_DOMAIN}" "client.${PRIVATE_DOMAIN}"
 	"datagen.${PRIVATE_DOMAIN}" "jdbcsink.${PRIVATE_DOMAIN}" "replicator.${PRIVATE_DOMAIN}")
 declare -a PUBLIC_DNS=(
@@ -21,6 +22,7 @@ declare -a PUBLIC_DNS=(
 	"localhost" "localhost" "localhost" 
 	"localhost,lb,lb.${PRIVATE_DOMAIN}" "localhost,lb,lb.${PRIVATE_DOMAIN}" "localhost,lb,lb.${PRIVATE_DOMAIN}"
 	"localhost,lb,lb.${PRIVATE_DOMAIN}" "localhost,lb,lb.${PRIVATE_DOMAIN}" "localhost,lb,lb.${PRIVATE_DOMAIN}" 
+	"localhost" "localhost" "localhost" 
 	"localhost" "localhost" "localhost" 
 	"localhost" "localhost" "localhost" 
 	"localhost" "localhost" "localhost"
