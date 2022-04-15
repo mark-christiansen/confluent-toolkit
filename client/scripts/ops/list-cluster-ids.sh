@@ -8,3 +8,4 @@ cd ${BASE}
 confluent cluster describe --url $MDS_URL --ca-cert-path /var/ssl/private/ca.crt
 confluent cluster describe --url $SCHEMA_URL --ca-cert-path /var/ssl/private/ca.crt
 confluent cluster describe --url $KAFKA_CONNECT_URL --ca-cert-path /var/ssl/private/ca.crt
+confluent cluster describe --url $KSQL_URL --ca-cert-path /var/ssl/private/ca.crt

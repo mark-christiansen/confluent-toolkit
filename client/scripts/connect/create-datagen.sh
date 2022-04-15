@@ -114,7 +114,7 @@ if [[ $SSL == "true" ]]; then
     "value.converter.schema.registry.basic.auth.user.info": "\${secret:datagen:username}:\${secret:datagen:password}",
     "value.converter.schema.registry.basic.auth.credentials.source": "USER_INFO",
     "max.interval": "1000",
-    "iterations": "1000",
+    "iterations": "5000",
     "producer.override.client.id": "$PRINCIPAL-producer",
     "producer.override.security.protocol": "SASL_SSL",
     "producer.override.ssl.keystore.location": "$KEYSTORE_LOCATION",
@@ -123,7 +123,7 @@ if [[ $SSL == "true" ]]; then
     "producer.override.ssl.truststore.location": "$TRUSTSTORE_LOCATION",
     "producer.override.ssl.truststore.password": "\${secret:datagen:keypassword}",
     "producer.override.sasl.mechanism": "$SASL_MECHANISM",
-    "producer.override.sasl.jaas.config": "$SASL_MODULE required username=\"\${secret:datagen:username}\" password=\"\${secret:datagen:password}\";"
+    "producer.override.sasl.jaas.config": "$SASL_MODULE required username=\"\${vault:secret/datagen:cp_username}\" password=\"\${vault:secret/datagen:cp_password}\";"
   }
 }
 EOF

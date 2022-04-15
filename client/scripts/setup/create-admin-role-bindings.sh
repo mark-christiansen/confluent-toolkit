@@ -30,4 +30,7 @@ confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role System
 CONNECT_CLUSTER="docker-connect-cluster"
 confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role SystemAdmin --kafka-cluster-id $CLUSTER_ID --connect-cluster-id $CONNECT_CLUSTER
 
+KSQL_CLUSTER="ksql-cluster"
+confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role SystemAdmin --kafka-cluster-id $CLUSTER_ID --ksql-cluster-id $KSQL_CLUSTER
+
 echo "Created RBAC roles for admin clients"

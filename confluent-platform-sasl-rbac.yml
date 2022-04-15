@@ -852,6 +852,7 @@ services:
         ./create-admin-role-bindings.sh sasl Group
         ./create-schema-registry-role-bindings.sh sasl Group
         ./create-kafka-connect-role-bindings.sh sasl Group
+        ./create-ksql-role-bindings.sh sasl Group
         ./create-control-center-role-bindings.sh sasl Group
         touch /tmp/initialized
         tail -f /dev/null
@@ -934,14 +935,53 @@ services:
       timeout: 10s
       retries: 10
 
+  vault:
+    image: vault
+    hostname: vault
+    container_name: vault
+    command:
+      - sh
+      - -c
+      - |
+        echo "Starting vault server"
+        vault server -dev &
+        echo "Creating default vault secrets"
+        sleep 2
+        vault kv put secret/datagen cp_username=datagen cp_password=datagen-secret
+        vault kv put secret/jdbcsink db_username=postgres db_password=postgrespass cp_username=jdbcsink cp_password=jdbcsink-secret
+        sleep infinity
+    ports:
+      - 8200:8200
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: mytoken
+      VAULT_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
+      VAULT_TOKEN: mytoken
+      VAULT_ADDR: http://localhost:8200
+    cap_add:
+      - IPC_LOCK
+    volumes:
+      - ./volumes/vault/logs:/vault/logs
+      - ./volumes/vault/file:/vault/file
+    networks:
+      - kafka-network
+    healthcheck:
+      test: ["CMD", "sh", "-c", "vault status"]
+      start_period: 2s
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   connect1:
-    image: confluentinc/cp-server-connect:${CONFLUENT_VERSION}
+    image: cp-server-connect-vault:${CONFLUENT_VERSION}
     hostname: connect1
     container_name: connect1
     links:
       - schema1
+      - vault
     depends_on:
       schema1:
+        condition: service_healthy
+      vault:
         condition: service_healthy
     command:
       - bash
@@ -952,6 +992,7 @@ services:
         confluent-hub install --no-prompt confluentinc/kafka-connect-jdbc:10.2.6
         confluent-hub install --no-prompt confluentinc/kafka-connect-replicator:7.0.1
         curl -k https://jdbc.postgresql.org/download/postgresql-42.3.1.jar --output /usr/share/java/postgresql-42.3.1.jar
+        confluent-hub install --no-prompt jcustenborder/kafka-config-provider-vault:latest
         #
         echo "Starting Kafka Connect server"
         /etc/confluent/docker/run &
@@ -1088,7 +1129,7 @@ services:
       #CONNECT_ADMIN_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/connect1.kafka_network.truststore.jks'
       #CONNECT_ADMIN_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       # secret registry
-      CONNECT_CONFIG_PROVIDERS: 'secret'
+      CONNECT_CONFIG_PROVIDERS: 'secret,vault'
       CONNECT_CONFIG_PROVIDERS_SECRET_CLASS: 'io.confluent.connect.secretregistry.rbac.config.provider.InternalSecretConfigProvider'
       CONNECT_CONFIG_PROVIDERS_SECRET_PARAM_MASTER_ENCRYPTION_KEY: 'connect-secret-registry-secret'
       CONNECT_CONFIG_PROVIDERS_SECRET_PARAM_KAFKASTORE_BOOTSTRAP_SERVERS: lb:19092
@@ -1108,6 +1149,13 @@ services:
               password="connect-secret";
       CONNECT_CONFIG_PROVIDERS_SECRET_PARAM_KAFKASTORE_HTTP_AUTH_CREDENTIALS_PROVIDER: BASIC
       CONNECT_CONFIG_PROVIDERS_SECRET_PARAM_KAFKASTORE_BASIC_AUTH_USER_INFO: 'connect:connect-secret'
+      # hashicorp vault
+      CONNECT_CONFIG_PROVIDERS_VAULT_CLASS: 'com.github.jcustenborder.kafka.config.vault.VaultConfigProvider'
+      CONNECT_CONFIG_PROVIDERS_VAULT_PARAM_VAULT_ADDRESS: http://vault:8200
+      CONNECT_CONFIG_PROVIDERS_VAULT_PARAM_VAULT_AUTH_METHOD: token
+      CONNECT_CONFIG_PROVIDERS_VAULT_PARAM_VAULT_SSL_VERIFY_ENABLED: 'false'
+      CONNECT_CONFIG_PROVIDERS_VAULT_PARAM_VAULT_TOKEN: mytoken
+      CONNECT_CONFIG_PROVIDERS_VAULT_PARAM_VAULT_NAMESPACE: 
       # Set in seconds, this was changed to allow for detection of new topics and partitions quicker by the
       # JDBC sink connector (default is five minutes). Comment out this setting for overall better consumer
       # performance.
@@ -1150,10 +1198,10 @@ services:
     networks:
       - kafka-network
 
-  ksql:
+  ksql1:
     image: confluentinc/cp-ksqldb-server:${CONFLUENT_VERSION}
-    hostname: ksql
-    container_name: ksql
+    hostname: ksql1
+    container_name: ksql1
     links:
       - connect1
     depends_on:
@@ -1175,7 +1223,7 @@ services:
       KSQL_CACHE_MAX_BYTES_BUFFERING: 0
       # rest service
       KSQL_LISTENERS: "https://0.0.0.0:8088"
-      KSQL_HOST_NAME: ksql
+      KSQL_HOST_NAME: ksql1
       # broker connection
       KSQL_BOOTSTRAP_SERVERS: lb:19092
       # encryption
@@ -1345,7 +1393,11 @@ services:
       CONTROL_CENTER_SCHEMA_REGISTRY_SCHEMA_REGISTRY_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/c3.kafka_network.truststore.jks
       CONTROL_CENTER_SCHEMA_REGISTRY_SCHEMA_REGISTRY_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       # KSQL
-
+      CONTROL_CENTER_KSQL_KSQL_ADVERTISED_URL: https://ksql1:8088
+      CONTROL_CENTER_KSQL_KSQL_URL: https://ksql1:8088
+      CONTROL_CENTER_KSQL_KSQL_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/c3.kafka_network.truststore.jks
+      CONTROL_CENTER_KSQL_KSQL_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+      CONTROL_CENTER_KSQL_KSQL_BASIC_AUTH_USER_INFO: c3:c3-secret
       # RBAC
       PUBLIC_KEY_PATH: /var/ssl/private/token_crt.pem
       # Used by Control Center to connect to MDS to verify tokens and authenticate clients

@@ -25,6 +25,7 @@ dst() {
     export ZOO3_URL="zoo6:2186"
     export SCHEMA_URL="https://schema2:8082"
     export KAFKA_CONNECT_URL="https://connect1:8083"
+    export KSQL_URL="https://ksql1:8088"
 }
 
 dst_local() {
@@ -44,6 +45,7 @@ dst_local() {
     export ZOO3_URL="localhost:2186"
     export SCHEMA_URL="https://localhost:8082"
     export KAFKA_CONNECT_URL="https://localhost:8083"
+    export KSQL_URL="https://localhost:8088"
 }
 
 # env variables for cluster linking "source" cluster
@@ -61,6 +63,7 @@ src() {
     export ZOO3_URL="zoo3:2183"
     export SCHEMA_URL="https://schema1:8081"
     export KAFKA_CONNECT_URL="https://connect1:8083"
+    export KSQL_URL="https://ksql1:8088"
 }
 
 src_local() {
@@ -77,6 +80,7 @@ src_local() {
     export ZOO3_URL="localhost:2183"
     export SCHEMA_URL="https://localhost:8081"
     export KAFKA_CONNECT_URL="https://localhost:8083"
+    export KSQL_URL="https://localhost:8088"
 }
 
 mtls() {
@@ -94,6 +98,7 @@ mtls() {
     export SCHEMA_URL="https://schema1:8081"
     export MDS_URL="https://kafka1:8091"
     export KAFKA_CONNECT_URL="https://connect1:8083"
+    export KSQL_URL="https://ksql1:8088"
 }
 
 mtls_local() {
@@ -111,6 +116,7 @@ mtls_local() {
     export SCHEMA_URL="https://localhost:8081"
     export MDS_URL="https://localhost:8091"
     export KAFKA_CONNECT_URL="https://localhost:8083"
+    export KSQL_URL="https://localhost:8088"
 }
 
 sasl() {
@@ -128,6 +134,7 @@ sasl() {
     export SCHEMA_URL="https://schema1:8081"
     export MDS_URL="https://kafka1:8091"
     export KAFKA_CONNECT_URL="https://connect1:8083"
+    export KSQL_URL="https://ksql1:8088"
 }
 
 sasl_local() {
@@ -145,6 +152,7 @@ sasl_local() {
     export SCHEMA_URL="https://localhost:8081"
     export MDS_URL="https://localhost:8091"
     export KAFKA_CONNECT_URL="https://localhost:8083"
+    export KSQL_URL="https://localhost:8088"
 }
 
 sasl_client() {
@@ -162,6 +170,7 @@ sasl_client() {
     export SCHEMA_URL="https://schema1:8081"
     export MDS_URL="https://kafka1:8091"
     export KAFKA_CONNECT_URL="https://connect1:8083"
+    export KSQL_URL="https://ksql1:8088"
 }
 
 sasl_client_local() {
@@ -179,6 +188,7 @@ sasl_client_local() {
     export SCHEMA_URL="https://localhost:8081"
     export MDS_URL="https://localhost:8091"
     export KAFKA_CONNECT_URL="https://localhost:8083"
+    export KSQL_URL="https://localhost:8088"
 }
 
 scram() {
@@ -196,6 +206,7 @@ scram() {
     export SCHEMA_URL="https://schema1:8081"
     export MDS_URL="https://kafka1:8091"
     export KAFKA_CONNECT_URL="https://connect1:8083"
+    export KSQL_URL="https://ksql1:8088"
 }
 
 scram_local() {
@@ -213,6 +224,7 @@ scram_local() {
     export SCHEMA_URL="https://localhost:8081"
     export MDS_URL="https://localhost:8091"
     export KAFKA_CONNECT_URL="https://localhost:8083"
+    export KSQL_URL="https://localhost:8088"
 }
 
 token() {
@@ -230,6 +242,7 @@ token() {
     export SCHEMA_URL="https://schema1:8081"
     export MDS_URL="https://kafka1:8091"
     export KAFKA_CONNECT_URL="https://connect1:8083"
+    export KSQL_URL="https://ksql1:8088"
 }
 
 # env from user input
