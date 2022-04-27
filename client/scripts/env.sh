@@ -7,6 +7,12 @@ if [[ $PATH != *"$CONFLUENT_LOCAL_HOME"* ]]; then
   export PATH
 fi
 
+# registered cluster names
+KAFKA_CLUSTER="kafka-cluster"
+SCHEMA_CLUSTER="schema-registry-cluster"
+CONNECT_CLUSTER="kafka-connect-cluster"
+KSQL_CLUSTER="ksql-cluster"
+
 # env variables for cluster linking "destination" cluster
 dst() {
     echo "Setting \"dst\" environment variables"

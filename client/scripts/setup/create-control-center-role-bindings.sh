@@ -22,25 +22,20 @@ METRICS_TOPIC="_confluent-metrics"
 COMMAND_TOPIC="_confluent-command"
 C3_TOPIC="_confluent-controlcenter"
 
-# get the kafka cluster ID
-CLUSTER_ID=$(kafka-cluster cluster-id --bootstrap-server $BROKER_URL --config $KAFKA_CONFIG | sed -n "s/^Cluster ID: \(.*\)$/\1/p")
-[[ -z "$CLUSTER_ID" ]] && { echo "Kafka cluster ID could not be found" ; exit 1; }
-echo "Retrieved Kafka cluster ID: $CLUSTER_ID"
-
 confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role ResourceOwner --resource Topic:$COMMAND_TOPIC \
---prefix --kafka-cluster-id $CLUSTER_ID
+--prefix --cluster-name $KAFKA_CLUSTER
 confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role ResourceOwner --resource Topic:$METRICS_TOPIC \
---prefix --kafka-cluster-id $CLUSTER_ID
+--prefix --cluster-name $KAFKA_CLUSTER
 confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role ResourceOwner --resource Topic:$MONITOR_TOPIC \
---prefix --kafka-cluster-id $CLUSTER_ID
+--prefix --cluster-name $KAFKA_CLUSTER
 confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role ResourceOwner --resource Topic:$C3_TOPIC \
---prefix --kafka-cluster-id $CLUSTER_ID
+--prefix --cluster-name $KAFKA_CLUSTER
 confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role ResourceOwner --resource Group:_confluent-controlcenter --prefix \
---kafka-cluster-id $CLUSTER_ID
+--cluster-name $KAFKA_CLUSTER
 #confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role DeveloperRead --resource Group:* --kafka-cluster-id $CLUSTER_ID
-confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role ClusterAdmin --kafka-cluster-id $CLUSTER_ID
-confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role AuditAdmin --kafka-cluster-id $CLUSTER_ID
-confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role Operator --kafka-cluster-id $CLUSTER_ID
-confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role SystemAdmin --kafka-cluster-id $CLUSTER_ID
+confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role ClusterAdmin --cluster-name $KAFKA_CLUSTER
+confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role AuditAdmin --cluster-name $KAFKA_CLUSTER
+confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role Operator --cluster-name $KAFKA_CLUSTER
+confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role SystemAdmin --cluster-name $KAFKA_CLUSTER
 
 echo "Created RBAC roles for control center"

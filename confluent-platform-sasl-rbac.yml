@@ -221,6 +221,7 @@ services:
       KAFKA_ZOOKEEPER_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/kafka1.kafka_network.truststore.jks
       KAFKA_ZOOKEEPER_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       KAFKA_ZOOKEEPER_SSL_CIPHER_SUITES: ${SSL_CIPHER_SUITES}
+      KAFKA_ZOOKEEPER_SET_ACL: 'true'
       #KAFKA_ZOOKEEPER_SASL_CLIENT: 'true'
       # listeners
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: EXTERNAL:SASL_SSL,TOKEN:SASL_SSL,INTERNAL:SASL_SSL
@@ -426,6 +427,7 @@ services:
       KAFKA_ZOOKEEPER_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/kafka2.kafka_network.truststore.jks
       KAFKA_ZOOKEEPER_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       KAFKA_ZOOKEEPER_SSL_CIPHER_SUITES: ${SSL_CIPHER_SUITES}
+      KAFKA_ZOOKEEPER_SET_ACL: 'true'
       #KAFKA_ZOOKEEPER_SASL_CLIENT: 'true'
       # listeners
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: EXTERNAL:SASL_SSL,TOKEN:SASL_SSL,INTERNAL:SASL_SSL
@@ -631,6 +633,7 @@ services:
       KAFKA_ZOOKEEPER_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/kafka3.kafka_network.truststore.jks
       KAFKA_ZOOKEEPER_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       KAFKA_ZOOKEEPER_SSL_CIPHER_SUITES: ${SSL_CIPHER_SUITES}
+      KAFKA_ZOOKEEPER_SET_ACL: 'true'
       #KAFKA_ZOOKEEPER_SASL_CLIENT: 'true'
       # listeners
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: EXTERNAL:SASL_SSL,TOKEN:SASL_SSL,INTERNAL:SASL_SSL
@@ -849,6 +852,7 @@ services:
         cd /scripts
         ./login.sh sasl
         cd setup
+        ./register-kafka-cluster.sh sasl
         ./create-admin-role-bindings.sh sasl Group
         ./create-schema-registry-role-bindings.sh sasl Group
         ./create-kafka-connect-role-bindings.sh sasl Group
@@ -1054,24 +1058,10 @@ services:
       CONNECT_KEY_CONVERTER: io.confluent.connect.avro.AvroConverter
       CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: https://schema1:8081
       CONNECT_KEY_SUBJECT_NAME_STRATEGY: io.confluent.kafka.serializers.subject.RecordNameStrategy
-      #CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_SSL_KEYSTORE_LOCATION: '/var/ssl/private/connect1.kafka_network.keystore.jks'
-      #CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-      #CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_SSL_KEY_PASSWORD: ${KEYSTORE_PASSWORD}
-      #CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/connect1.kafka_network.truststore.jks'
-      #CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-      #CONNECT_KEY_CONVERTER_BASIC_AUTH_USER_INFO: 'connect:connect-secret'
-      #CONNECT_KEY_CONVERTER_HTTP_AUTH_CREDENTIALS_SOURCE: USER_INFO
       # value converter
       CONNECT_VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter
       CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: https://schema1:8081
       CONNECT_VALUE_SUBJECT_NAME_STRATEGY: io.confluent.kafka.serializers.subject.RecordNameStrategy
-      #CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_SSL_KEYSTORE_LOCATION: '/var/ssl/private/connect1.kafka_network.keystore.jks'
-      #CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-      #CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_SSL_KEY_PASSWORD: ${KEYSTORE_PASSWORD}
-      #CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/connect1.kafka_network.truststore.jks'
-      #CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-      #CONNECT_VALUE_CONVERTER_BASIC_AUTH_USER_INFO: 'connect:connect-secret'
-      #CONNECT_VALUE_CONVERTER_HTTP_AUTH_CREDENTIALS_SOURCE: 'USER_INFO'
       # internal converter
       CONNECT_INTERNAL_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
       CONNECT_INTERNAL_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
@@ -1081,53 +1071,10 @@ services:
       CONNECT_PRODUCER_BOOTSTRAP_SERVERS: lb:29092
       CONNECT_PRODUCER_SECURITY_PROTOCOL: SASL_SSL
       CONNECT_PRODUCER_SASL_MECHANISM: PLAIN
-      #CONNECT_PRODUCER_SASL_LOGIN_CALLBACK_HANDLER_CLASS: io.confluent.kafka.clients.plugins.auth.token.TokenUserLoginCallbackHandler
-      #CONNECT_PRODUCER_CONFLUENT_MONITORING_INTERCEPTOR_SASL_MECHANISM: OAUTHBEARER
-      #CONNECT_PRODUCER_CONFLUENT_MONITORING_INTERCEPTOR_SASL_LOGIN_CALLBACK_HANDLER_CLASS: io.confluent.kafka.clients.plugins.auth.token.TokenUserLoginCallbackHandler
-      #CONNECT_PRODUCER_CONFLUENT_MONITORING_INTERCEPTOR_SASL_JAAS_CONFIG: |
-      #        org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required \
-      #        metadataServerUrls="https://kafka1:8091,https://kafka2:8092,https://kafka3:8093" \
-      #        username="connect" \
-      #        password="connect-secret";
-      #CONNECT_PRODUCER_SSL_KEYSTORE_LOCATION: '/var/ssl/private/connect1.kafka_network.keystore.jks'
-      #CONNECT_PRODUCER_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-      #CONNECT_PRODUCER_SSL_KEY_PASSWORD: ${KEYSTORE_PASSWORD}
-      #CONNECT_PRODUCER_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/connect1.kafka_network.truststore.jks'
-      #CONNECT_PRODUCER_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       # consumer
       CONNECT_CONSUMER_BOOTSTRAP_SERVERS: lb:29092
       CONNECT_CONSUMER_SECURITY_PROTOCOL: SASL_SSL
       CONNECT_CONSUMER_SASL_MECHANISM: PLAIN
-      #CONNECT_CONSUMER_SASL_LOGIN_CALLBACK_HANDLER_CLASS: io.confluent.kafka.clients.plugins.auth.token.TokenUserLoginCallbackHandler
-      #CONNECT_CONSUMER_CONFLUENT_MONITORING_INTERCEPTOR_SASL_MECHANISM: OAUTHBEARER
-      #CONNECT_CONSUMER_CONFLUENT_MONITORING_INTERCEPTOR_SASL_LOGIN_CALLBACK_HANDLER_CLASS: io.confluent.kafka.clients.plugins.auth.token.TokenUserLoginCallbackHandler
-      #CONNECT_CONSUMER_CONFLUENT_MONITORING_INTERCEPTOR_SASL_JAAS_CONFIG: |
-      #        org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required \
-      #        metadataServerUrls="https://kafka1:8091,https://kafka2:8092,https://kafka3:8093" \
-      #        username="connect" \
-      #        password="connect-secret";
-      #CONNECT_CONSUMER_SSL_KEYSTORE_LOCATION: '/var/ssl/private/connect1.kafka_network.keystore.jks'
-      #CONNECT_CONSUMER_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-      #CONNECT_CONSUMER_SSL_KEY_PASSWORD: ${KEYSTORE_PASSWORD}
-      #CONNECT_CONSUMER_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/connect1.kafka_network.truststore.jks'
-      #CONNECT_CONSUMER_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-      # admin
-      #CONNECT_ADMIN_BOOTSTRAP_SERVERS: lb:9092
-      #CONNECT_ADMIN_SECURITY_PROTOCOL: SASL_SSL
-      #CONNECT_ADMIN_SASL_MECHANISM: PLAIN
-      #CONNECT_ADMIN_SASL_LOGIN_CALLBACK_HANDLER_CLASS: io.confluent.kafka.clients.plugins.auth.token.TokenUserLoginCallbackHandler
-      #CONNECT_ADMIN_CONFLUENT_MONITORING_INTERCEPTOR_SASL_MECHANISM: OAUTHBEARER
-      #CONNECT_ADMIN_CONFLUENT_MONITORING_INTERCEPTOR_SASL_LOGIN_CALLBACK_HANDLER_CLASS: io.confluent.kafka.clients.plugins.auth.token.TokenUserLoginCallbackHandler
-      #CONNECT_ADMIN_CONFLUENT_MONITORING_INTERCEPTOR_SASL_JAAS_CONFIG: |
-      #        org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required \
-      #        metadataServerUrls="https://kafka1:8091,https://kafka2:8092,https://kafka3:8093" \
-      #        username="connect" \
-      #        password="connect-secret";
-      #CONNECT_ADMIN_SSL_KEYSTORE_LOCATION: '/var/ssl/private/connect1.kafka_network.keystore.jks'
-      #CONNECT_ADMIN_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-      #CONNECT_ADMIN_SSL_KEY_PASSWORD: ${KEYSTORE_PASSWORD}
-      #CONNECT_ADMIN_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/connect1.kafka_network.truststore.jks'
-      #CONNECT_ADMIN_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       # secret registry
       CONNECT_CONFIG_PROVIDERS: 'secret,vault'
       CONNECT_CONFIG_PROVIDERS_SECRET_CLASS: 'io.confluent.connect.secretregistry.rbac.config.provider.InternalSecretConfigProvider'
@@ -1155,7 +1102,6 @@ services:
       CONNECT_CONFIG_PROVIDERS_VAULT_PARAM_VAULT_AUTH_METHOD: token
       CONNECT_CONFIG_PROVIDERS_VAULT_PARAM_VAULT_SSL_VERIFY_ENABLED: 'false'
       CONNECT_CONFIG_PROVIDERS_VAULT_PARAM_VAULT_TOKEN: mytoken
-      CONNECT_CONFIG_PROVIDERS_VAULT_PARAM_VAULT_NAMESPACE: 
       # Set in seconds, this was changed to allow for detection of new topics and partitions quicker by the
       # JDBC sink connector (default is five minutes). Comment out this setting for overall better consumer
       # performance.
@@ -1213,6 +1159,7 @@ services:
       CUB_CLASSPATH: '/usr/share/java/confluent-security/ksql/*:/usr/share/java/ksqldb-server/*:/usr/share/java/cp-base-new/*'
       # general
       KSQL_KSQL_SERVICE_ID: "ksql-cluster"
+      KSQL_KSQL_SINK_REPLICAS: 3
       KSQL_KSQL_STREAMS_REPLICATION_FACTOR: 3
       KSQL_KSQL_INTERNAL_TOPIC_REPLICAS: 3
       KSQL_KSQL_STREAMS_NUM_STREAM_THREADS: 1
@@ -1221,6 +1168,7 @@ services:
       KSQL_KSQL_LOGGING_PROCESSING_STREAM_AUTO_CREATE: 'true'
       KSQL_PRODUCER_ENABLE_IDEMPOTENCE: 'true'
       KSQL_CACHE_MAX_BYTES_BUFFERING: 0
+
       # rest service
       KSQL_LISTENERS: "https://0.0.0.0:8088"
       KSQL_HOST_NAME: ksql1
@@ -1239,7 +1187,7 @@ services:
       KSQL_SASL_LOGIN_CALLBACK_HANDLER_CLASS: io.confluent.kafka.clients.plugins.auth.token.TokenUserLoginCallbackHandler
       KSQL_SASL_JAAS_CONFIG: >-
               org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required
-              metadataServerUrls="https://kafka1:8091,https://kafka2:8092,https://kafka2:8093"
+              metadataServerUrls="https://kafka1:8091,https://kafka2:8092,https://kafka3:8093"
               username="ksql"
               password="ksql-secret";
       # rbac settings
@@ -1247,10 +1195,15 @@ services:
       # Enable bearer token authentication which allows the identity of the ksqlDB end user to be propagated to Kafka for authorization
       KSQL_KSQL_AUTHENTICATION_PLUGIN_CLASS: io.confluent.ksql.security.VertxBearerOrBasicAuthenticationPlugin
       KSQL_PUBLIC_KEY_PATH: /var/ssl/private/token_crt.pem
+      KSQL_KSQL_ACCESS_VALIDATOR_ENABLE: 'on'
       # metadata service
-      KSQL_CONFLUENT_METADATA_BOOTSTRAP_SERVER_URLS: https://kafka1:8091,https://kafka2:8092,https://kafka2:8093
+      KSQL_CONFLUENT_METADATA_BOOTSTRAP_SERVER_URLS: https://kafka1:8091,https://kafka2:8092,https://kafka3:8093
+      KSQL_CONFLUENT_METADATA_SSL_KEYSTORE_LOCATION: /var/ssl/private/ksql1.kafka_network.keystore.jks
+      KSQL_CONFLUENT_METADATA_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+      KSQL_CONFLUENT_METADATA_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/ksql1.kafka_network.truststore.jks
+      KSQL_CONFLUENT_METADATA_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+      #KSQL_CONFLUENT_METADATA_BASIC_AUTH_CREDENTIALS_PROVIDER: USER_INFO
       KSQL_CONFLUENT_METADATA_HTTP_AUTH_CREDENTIALS_PROVIDER: BASIC
-      KSQL_CONFLUENT_METADATA_BASIC_AUTH_CREDENTIALS_PROVIDER: USER_INFO
       KSQL_CONFLUENT_METADATA_BASIC_AUTH_USER_INFO: ksql:ksql-secret
       # schema registry
       KSQL_KSQL_SCHEMA_REGISTRY_URL: https://schema1:8081
@@ -1261,22 +1214,42 @@ services:
       # Confluent Monitoring Interceptors for Control Center streams monitoring
       KSQL_PRODUCER_INTERCEPTOR_CLASSES: "io.confluent.monitoring.clients.interceptor.MonitoringProducerInterceptor"
       KSQL_CONSUMER_INTERCEPTOR_CLASSES: "io.confluent.monitoring.clients.interceptor.MonitoringConsumerInterceptor"    
-      KSQL_CONFLUENT_MONITORING_INTERCEPTOR_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/ksql1.kafka_network.truststore.jks'
-      KSQL_CONFLUENT_MONITORING_INTERCEPTOR_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       KSQL_CONFLUENT_MONITORING_INTERCEPTOR_SSL_KEYSTORE_LOCATION: '/var/ssl/private/ksql1.kafka_network.keystore.jks'
       KSQL_CONFLUENT_MONITORING_INTERCEPTOR_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+      KSQL_CONFLUENT_MONITORING_INTERCEPTOR_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/ksql1.kafka_network.truststore.jks'
+      KSQL_CONFLUENT_MONITORING_INTERCEPTOR_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       KSQL_CONFLUENT_MONITORING_INTERCEPTOR_SECURITY_PROTOCOL: SASL_SSL
       KSQL_CONFLUENT_MONITORING_INTERCEPTOR_SASL_MECHANISM: OAUTHBEARER
       KSQL_CONFLUENT_MONITORING_INTERCEPTOR_SASL_LOGIN_CALLBACK_HANDLER_CLASS: io.confluent.kafka.clients.plugins.auth.token.TokenUserLoginCallbackHandler
       KSQL_CONFLUENT_MONITORING_INTERCEPTOR_SASL_JAAS_CONFIG: >-
               org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required
-              metadataServerUrls="https://kafka1:8091,https://kafka2:8092,https://kafka2:8093"
+              metadataServerUrls="https://kafka1:8091,https://kafka2:8092,https://kafka3:8093"
               username="ksql"
               password="ksql-secret";
       # logging
-      KSQL_LOG4J_ROOT_LOGLEVEL: INFO
+      KSQL_LOG4J_ROOT_LOGLEVEL: WARN
     volumes:
       - ./certs:/var/ssl/private:ro
+    networks:
+      - kafka-network
+    healthcheck:
+      test: ["CMD", "bash", "-c", "curl -k -u ksql:ksql-secret https://ksql1:8088/healthcheck | grep '\"isHealthy\":true'"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+
+  ksql-cli:
+    image: confluentinc/cp-ksqldb-cli:${CONFLUENT_VERSION}
+    hostname: ksql-cli
+    container_name: ksql-cli
+    depends_on:
+      ksql1:
+        condition: service_healthy
+    volumes:
+      - ./certs:/var/ssl/private:ro
+      - ./ksql:/config:ro
+    entrypoint: /bin/sh
+    tty: true
     networks:
       - kafka-network
 
@@ -1388,13 +1361,15 @@ services:
       CONTROL_CENTER_CONNECT_CONNECT1_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       # Schema Registry
       CONTROL_CENTER_SCHEMA_REGISTRY_URL: https://schema1:8081
-      CONTROL_CENTER_SCHEMA_REGISTRY_SR1_SSL_KEYSTORE_LOCATION: /var/ssl/private/c3.kafka_network.keystore.jks
+      CONTROL_CENTER_SCHEMA_REGISTRY_SCHEMA_REGISTRY_SSL_KEYSTORE_LOCATION: /var/ssl/private/c3.kafka_network.keystore.jks
       CONTROL_CENTER_SCHEMA_REGISTRY_SCHEMA_REGISTRY_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       CONTROL_CENTER_SCHEMA_REGISTRY_SCHEMA_REGISTRY_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/c3.kafka_network.truststore.jks
       CONTROL_CENTER_SCHEMA_REGISTRY_SCHEMA_REGISTRY_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       # KSQL
       CONTROL_CENTER_KSQL_KSQL_ADVERTISED_URL: https://ksql1:8088
       CONTROL_CENTER_KSQL_KSQL_URL: https://ksql1:8088
+      CONTROL_CENTER_KSQL_KSQL_SSL_KEYSTORE_LOCATION: /var/ssl/private/c3.kafka_network.keystore.jks
+      CONTROL_CENTER_KSQL_KSQL_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       CONTROL_CENTER_KSQL_KSQL_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/c3.kafka_network.truststore.jks
       CONTROL_CENTER_KSQL_KSQL_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       CONTROL_CENTER_KSQL_KSQL_BASIC_AUTH_USER_INFO: c3:c3-secret
@@ -1402,13 +1377,15 @@ services:
       PUBLIC_KEY_PATH: /var/ssl/private/token_crt.pem
       # Used by Control Center to connect to MDS to verify tokens and authenticate clients
       CONFLUENT_METADATA_BOOTSTRAP_SERVER_URLS: https://kafka1:8091,https://kafka2:8092,https://kafka3:8093
+      CONFLUENT_METADATA_SSL_KEYSTORE_LOCATION: /var/ssl/private/c3.kafka_network.keystore.jks
+      CONFLUENT_METADATA_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       CONFLUENT_METADATA_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/c3.kafka_network.truststore.jks
       CONFLUENT_METADATA_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       CONFLUENT_METADATA_HTTP_AUTH_CREDENTIALS_PROVIDER: BASIC
       CONFLUENT_METADATA_BASIC_AUTH_USER_INFO: c3:c3-secret
       # Used by Control Center to connect to the Admin API for Self Balancing Clusters
       CONTROL_CENTER_STREAMS_CPREST_URL: "https://kafka1:8091,https://kafka2:8092,https://kafka3:8093"
-      #CONTROL_CENTER_LOG4J_ROOT_LOGLEVEL: "TRACE"
+      CONTROL_CENTER_LOG4J_ROOT_LOGLEVEL: INFO
     volumes:
       - ./volumes/c3/data:/var/lib/c3/data
       - ./certs:/var/ssl/private:ro

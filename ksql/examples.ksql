@@ -1,0 +1,41 @@
+# Connect to KSQL CLI: ksql -u admin -p admin-secret --config-file /config/sasl.config https://ksql1:8088
+
+# KSQL: Enhancement 
+
+SET 'auto.offset.reset' = 'earliest';
+
+CREATE STREAM origin_stream (lastName string key, countryOfOrigin string) WITH (KAFKA_TOPIC='env.app.origin', VALUE_FORMAT='AVRO', PARTITIONS='5');
+
+INSERT INTO origin_stream(lastName, countryOfOrigin) VALUES ('Van Halen', 'Netherlands');
+INSERT INTO origin_stream(lastName, countryOfOrigin) VALUES ('Wolfeschlegelsteinhausenbergerdorff', 'Germany');
+INSERT INTO origin_stream(lastName, countryOfOrigin) VALUES ('Osbourne', 'England');
+
+CREATE TABLE person_view (id bigint PRIMARY KEY, firstName varchar, lastName varchar, age int, birthDate date, money decimal(12,2), created timestamp, updated timestamp ) WITH (KAFKA_TOPIC='env.app.person', VALUE_FORMAT='AVRO');
+CREATE TABLE origin_view (lastName string PRIMARY KEY) WITH (KAFKA_TOPIC='env.app.origin', PARTITIONS=5, VALUE_FORMAT='AVRO');
+
+CREATE TABLE person_origin_view WITH (KAFKA_TOPIC='env.ksql.person-origin', VALUE_FORMAT='AVRO', PARTITIONS='5') AS
+  SELECT p.id, p.firstName, p.lastName, p.age, p.birthDate, p.money, p.created, p.updated, o.countryOfOrigin
+  FROM person_view p
+    LEFT JOIN origin_view o ON p.lastName = o.lastName
+  EMIT CHANGES;
+
+# KSQL: Count Table
+
+SET 'auto.offset.reset' = 'earliest';
+
+CREATE STREAM person_stream WITH (KAFKA_TOPIC='env.app.person', VALUE_FORMAT='AVRO');
+
+CREATE TABLE first_name_view WITH (KAFKA_TOPIC='env.ksql.first-name-view', PARTITIONS=1, VALUE_FORMAT='AVRO') AS
+    SELECT firstName AS firstName,
+           count_distinct(id) AS distinct_people
+    FROM person_stream
+    GROUP BY firstName
+    EMIT CHANGES;
+
+SELECT * FROM first_name_view EMIT CHANGES;
+
+# KSQL: Transform Stream
+
+SET 'auto.offset.reset' = 'earliest';
+
+CREATE STREAM person_stream WITH (KAFKA_TOPIC='env.app.person', VALUE_FORMAT='AVRO');

@@ -8,7 +8,7 @@ cd ${BASE}
 # create input topic for datagen connector
 TOPIC="env.app.person"
 echo "Creating datagen connector topic \"$TOPIC\""
-kafka-topics --bootstrap-server $BROKER_URL --command-config $KAFKA_CONFIG --create --topic $TOPIC --partitions 1
+kafka-topics --bootstrap-server $BROKER_URL --command-config $KAFKA_CONFIG --create --topic $TOPIC --partitions 5
 echo "Created datagen connector topic \"$TOPIC\""
 
 PRINCIPAL="datagen"
@@ -19,16 +19,10 @@ if [[ $RBAC == "true" ]]; then
   # login to cluster
   ../login.sh $ENV
 
-  CLUSTER_ID=$(kafka-cluster cluster-id --bootstrap-server $BROKER_URL --config $KAFKA_CONFIG | sed -n "s/^Cluster ID: \(.*\)$/\1/p")
-  [[ -z "$CLUSTER_ID" ]] && { echo "Kafka cluster ID could not be found" ; exit 1; }
-  echo "Retrieved Kafka cluster ID: $CLUSTER_ID"
-
-  confluent iam rolebinding create --principal User:$PRINCIPAL --role DeveloperWrite --resource Topic:$TOPIC --kafka-cluster-id $CLUSTER_ID
+  confluent iam rolebinding create --principal User:$PRINCIPAL --role DeveloperWrite --resource Topic:$TOPIC --cluster-name $KAFKA_CLUSTER
 
   SUBJECT="env.app.person-value"
-  SCHEMA_CLUSTER="schema-registry"
-  confluent iam rolebinding create --principal User:$PRINCIPAL --role DeveloperWrite --resource Subject:$SUBJECT \
-   --kafka-cluster-id $CLUSTER_ID --schema-registry-cluster-id $SCHEMA_CLUSTER
+  confluent iam rolebinding create --principal User:$PRINCIPAL --role DeveloperWrite --resource Subject:$SUBJECT --cluster-name $SCHEMA_CLUSTER
 
 # create ACLs for datagen connector if RBAC not enabled
 else
@@ -72,6 +66,7 @@ if [[ $SSL == "true" ]]; then
 
     echo "Creating datagen connector secrets"
     # create username secret
+    echo "curl -k $BASIC_AUTH --header \"Content-Type: application/json\" -X POST --data \"{\"secret\": \"$PRINCIPAL\"}\" $KAFKA_CONNECT_URL/secret/paths/$PRINCIPAL/keys/username/versions"
     HTTP_CODE=$(curl -k $BASIC_AUTH --header "Content-Type: application/json" -X POST --data "{\"secret\": \"$PRINCIPAL\"}" --write-out "%{http_code}" \
     $KAFKA_CONNECT_URL/secret/paths/$PRINCIPAL/keys/username/versions)
     if [[ ${HTTP_CODE} -lt 200 || ${HTTP_CODE} -gt 299 ]] ; then

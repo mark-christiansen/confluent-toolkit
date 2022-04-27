@@ -16,10 +16,4 @@ PRINCIPAL="$3"
 [[ -z "$4" ]] && { echo "Topic name not specified" ; exit 1; }
 TOPIC="$4"
 
-# get the kafka cluster ID
-CLUSTER_ID=$(kafka-cluster cluster-id --bootstrap-server $BROKER_URL --config $KAFKA_CONFIG | sed -n "s/^Cluster ID: \(.*\)$/\1/p")
-[[ -z "$CLUSTER_ID" ]] && { echo "Kafka cluster ID could not be found" ; exit 1; }
-echo "Retrieved Kafka cluster ID: $CLUSTER_ID"
-
-confluent iam rolebinding create --principal $PRINCIPAL_TYPE:$PRINCIPAL --role ResourceOwner --resource Topic:$TOPIC --prefix \
---kafka-cluster-id $CLUSTER_ID
+confluent iam rolebinding create --principal $PRINCIPAL_TYPE:$PRINCIPAL --role ResourceOwner --resource Topic:$TOPIC --prefix --cluster-name $KAFKA_CLUSTER

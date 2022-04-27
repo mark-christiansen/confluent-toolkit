@@ -24,28 +24,27 @@ GROUP="docker-connect-cluster"
 SECRETS_TOPIC="_confluent-secrets"
 SECRETS_GROUP="secret-registry"
 
-# get the kafka cluster ID
-CLUSTER_ID=$(kafka-cluster cluster-id --bootstrap-server $BROKER_URL --config $KAFKA_CONFIG | sed -n "s/^Cluster ID: \(.*\)$/\1/p")
-[[ -z "$CLUSTER_ID" ]] && { echo "Kafka cluster ID could not be found" ; exit 1; }
-echo "Retrieved Kafka cluster ID: $CLUSTER_ID"
-
 confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role ResourceOwner --resource Topic:$CONFIGS_TOPIC \
---kafka-cluster-id $CLUSTER_ID
+--cluster-name $KAFKA_CLUSTER
 confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role ResourceOwner --resource Topic:$OFFSETS_TOPIC \
---kafka-cluster-id $CLUSTER_ID
+--cluster-name $KAFKA_CLUSTER
 confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role ResourceOwner --resource Topic:$STATUS_TOPIC \
---kafka-cluster-id $CLUSTER_ID
+--cluster-name $KAFKA_CLUSTER
 confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role ResourceOwner --resource Group:$GROUP \
---kafka-cluster-id $CLUSTER_ID
+--cluster-name $KAFKA_CLUSTER
 confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role ResourceOwner --resource Topic:$SECRETS_TOPIC \
---kafka-cluster-id $CLUSTER_ID
+--cluster-name $KAFKA_CLUSTER
 confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role ResourceOwner --resource Group:$SECRETS_GROUP \
---kafka-cluster-id $CLUSTER_ID
-# only set if the connect user is the user used for conenct devops
-confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role SystemAdmin --kafka-cluster-id $CLUSTER_ID \
---connect-cluster-id $GROUP
+--cluster-name $KAFKA_CLUSTER
+# to make requests to MDS to determine if the connector user is authorized to perform required operations
+#confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role SecurityAdmin --cluster-name $CONNECT_CLUSTER
 # have connect worker dynamically create DLQ topics
 confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role ResourceOwner --resource Topic:dlq. --prefix \
---kafka-cluster-id $CLUSTER_ID
+--cluster-name $KAFKA_CLUSTER
+# permissions for secrets registry
+confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role ResourceOwner --resource Topic:_confluent-secrets --cluster-name $KAFKA_CLUSTER
+confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role ResourceOwner --resource Group:secret-registry --cluster-name $KAFKA_CLUSTER
+# permissions to submit connectors and make requests to MDS to determine if connector has permissions to perform required operations
+confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role SystemAdmin --cluster-name $CONNECT_CLUSTER
 
 echo "Created RBAC roles for Kafka Connect servers"

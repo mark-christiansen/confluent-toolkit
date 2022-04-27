@@ -22,14 +22,12 @@ if [[ $RBAC == "true" ]]; then
   [[ -z "$CLUSTER_ID" ]] && { echo "Kafka cluster ID could not be found" ; exit 1; }
   echo "Retrieved Kafka cluster ID: $CLUSTER_ID"
 
-  confluent iam rolebinding create --principal User:$PRINCIPAL --role ResourceOwner --resource Group:$GROUP --kafka-cluster-id $CLUSTER_ID
-  confluent iam rolebinding create --principal User:$PRINCIPAL --role DeveloperRead --resource Topic:$TOPIC --kafka-cluster-id $CLUSTER_ID
-  confluent iam rolebinding create --principal User:$PRINCIPAL --role ResourceOwner --resource Topic:$DLQ --kafka-cluster-id $CLUSTER_ID
+  confluent iam rolebinding create --principal User:$PRINCIPAL --role ResourceOwner --resource Group:$GROUP --cluster-name $KAFKA_CLUSTER
+  confluent iam rolebinding create --principal User:$PRINCIPAL --role DeveloperRead --resource Topic:$TOPIC --cluster-name $KAFKA_CLUSTER
+  confluent iam rolebinding create --principal User:$PRINCIPAL --role ResourceOwner --resource Topic:$DLQ --cluster-name $KAFKA_CLUSTER
 
   SUBJECT="env.app.person-value"
-  SCHEMA_CLUSTER="schema-registry"
-  confluent iam rolebinding create --principal User:$PRINCIPAL --role DeveloperRead --resource Subject:$SUBJECT \
-   --kafka-cluster-id $CLUSTER_ID --schema-registry-cluster-id $SCHEMA_CLUSTER
+  confluent iam rolebinding create --principal User:$PRINCIPAL --role DeveloperRead --resource Subject:$SUBJECT --cluster-name $SCHEMA_CLUSTER
 
 # create ACLs for jdbcsink connector if RBAC not enabled
 else

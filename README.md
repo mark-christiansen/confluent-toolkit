@@ -68,7 +68,7 @@ This environment uses SCRAM SHA-512 for authentication to brokers, which means t
 
 If you want to verify your environment is working correctly, you can open up a connection to the Postgres server on "localhost:5432" running in Docker and verify that there is a table created in the "public" schema called "person" which should be populated with records. This table is populated by the JDBC Sink Connector from a topic populated by the Datagen Connector.
 
-## Usage for Confluent Professional Services (CPS)
+## Usage for Confluent Professional Services (CPS) Engagements
 
 I have found it is useful to have a local enviornment running with the configuration settings of the client when participating in Confluent Professional Services (CPS) engagements. With a working local environment, it's easy to diagnose misconfigurations in the client's environment. To do this I grab the properties for the CP component in my local environment by following the instructions below and then compare those properties to the client's properties.
 
