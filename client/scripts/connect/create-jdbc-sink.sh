@@ -73,7 +73,7 @@ if [[ $SSL == "true" ]]; then
       JAAS_CONFIG="org.apache.kafka.common.security.scram.ScramLoginModule required username=\\\"\${vault:secret/jdbcsink:cp_username}\\\" password=\\\"\${vault:secret/jdbcsink:cp_password}\\\";"
     elif [[ $ENV == "gssapi" ]]; then
       SASL_MECHANISM="GSSAPI"
-      JAAS_CONFIG="com.sun.security.auth.module.Krb5LoginModule required useKeyTab=true storeKey=true keyTab=\\\"/etc/security/keytabs/connect.keytab\\\" principal=\\\"\${vault:secret/jdbcsink:cp_username}@MYCOMPANY.COM\\\";"
+      JAAS_CONFIG="com.sun.security.auth.module.Krb5LoginModule required useKeyTab=true storeKey=true keyTab=\\\"/etc/security/keytabs/connect.keytab\\\" principal=\\\"\${vault:secret/jdbcsink:cp_username}@${REALM}\\\";"
     fi
 
     echo "Creating jdbcsink connector secrets"

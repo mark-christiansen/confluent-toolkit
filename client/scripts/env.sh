@@ -8,6 +8,7 @@ if [[ $PATH != *"$CONFLUENT_LOCAL_HOME"* ]]; then
 fi
 
 DOMAIN="mycompany.com"
+REALM="MYCOMPANY.COM"
 
 # registered cluster names
 KAFKA_CLUSTER="kafka-cluster"

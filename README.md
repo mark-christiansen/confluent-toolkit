@@ -18,16 +18,16 @@ The following programs are required to exist on the host machine to use this pro
 
 ## Usage
 
-Before launching any environments, you will need to create the Kafka client docker image first which will be used to execute scripts for setup but also can be used for operational functions like viewing topics, ACLs, and consumer groups. To create the Kafka client docker image execute the "create-client.sh" script.
+There are a few custom docker images that need to be created for use in the various environments. They are:
+
+- Kafka Client (kafka-client): This is an `openjdk` image with Confluent Platform community installed and several operational scripts. This image is used for running setup scripts and as a way to view things inside of Kafka without using Control Center.
+- Kafka Connect Vault (kafka-connect-vault): This is a `cp-server-connect` image with the `jcustenborder/kafka-config-provider-vault` library installed. This library is the Hashicorp Vault secrets provider which is used to pull secrets for connectors similar to the Connect Secretys Registry, but instead against Hashicorp Vault.
+- KDC Server (kdc-server): This is a `debian:jesse` image with `krb5-kdc` and `krb5-admin-server` installed which is used for storing and maintaining Kerberos secrets.
+
+To build these images you can run the `docker-compose build` command against the Kerberos RBAC environment as shown below. This will not launch the environment, only build any custom images needed for these environments.
 
 ```
-    ./create-client.sh
-```
-
-In addition, you will need to create the Kafka Conenct vault docker image because some of the environments use Hashicorp Vault for storing secrets. To create the docker image, execute the "create-kafka-conenct-vault.sh" script.
-
-```
-    ./create-kafka-connect-vault.sh
+    docker-compose -f confluent-platform-gssapi-rbac.yml build
 ```
 
 Once the docker images are created you can now launch an environment. To launch a Confluent Platform environment, make sure docker is running and execute the script "setup.sh" in the base of this project, passing in the env name as an argument.

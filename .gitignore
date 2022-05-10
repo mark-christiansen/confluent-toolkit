@@ -23,6 +23,7 @@
 hs_err_pid*
 
 certs/
+kerberos/keytabs
 volumes/
 .DS_Store
 .srl
