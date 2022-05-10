@@ -32,6 +32,7 @@ confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role Resour
 --cluster-name $KAFKA_CLUSTER
 confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role ResourceOwner --resource Group:$GROUP \
 --cluster-name $KAFKA_CLUSTER
+# permissions for secrets registry
 confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role ResourceOwner --resource Topic:$SECRETS_TOPIC \
 --cluster-name $KAFKA_CLUSTER
 confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role ResourceOwner --resource Group:$SECRETS_GROUP \
@@ -41,9 +42,6 @@ confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role Resour
 # have connect worker dynamically create DLQ topics
 confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role ResourceOwner --resource Topic:dlq. --prefix \
 --cluster-name $KAFKA_CLUSTER
-# permissions for secrets registry
-confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role ResourceOwner --resource Topic:_confluent-secrets --cluster-name $KAFKA_CLUSTER
-confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role ResourceOwner --resource Group:secret-registry --cluster-name $KAFKA_CLUSTER
 # permissions to submit connectors and make requests to MDS to determine if connector has permissions to perform required operations
 confluent iam rolebinding create --principal $ROLE_TYPE:$PRINCIPAL --role SystemAdmin --cluster-name $CONNECT_CLUSTER
 

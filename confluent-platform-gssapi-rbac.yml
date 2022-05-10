@@ -390,7 +390,7 @@ services:
       # logging
       KAFKA_LOG4J_ROOT_LOGLEVEL: INFO
       # uncomment for debugging Kerberos authentication
-      KAFKA_LOG4J_LOGGERS: kafka.authorizer.logger=INFO,org.apache.kafka.common.security.kerberos=TRACE
+      #KAFKA_LOG4J_LOGGERS: kafka.authorizer.logger=INFO,org.apache.kafka.common.security.kerberos=TRACE
       # uncomment for debugging LDAP searches
       #KAFKA_LOG4J_LOGGERS: kafka.authorizer.logger=INFO,io.confluent.security.auth.provider.ldap=TRACE
       #KAFKA_OPTS: '-Djavax.net.debug=ssl'
@@ -398,7 +398,7 @@ services:
       #KAFKA_JMX_HOSTNAME: localhost
       KAFKA_OPTS: -Djava.security.auth.login.config=/etc/kafka/jaas.conf
                   -Djava.security.krb5.conf=/etc/krb5.conf
-                  -Dsun.security.krb5.debug=true
+                  #-Dsun.security.krb5.debug=true
     volumes:
       - ./secrets/gssapi-zoo-client-jaas.conf:/etc/kafka/jaas.conf:ro
       - ./kerberos/keytabs/kafka.keytab:/etc/security/keytabs/kafka.keytab:ro
@@ -615,7 +615,7 @@ services:
       # logging
       KAFKA_LOG4J_ROOT_LOGLEVEL: INFO
       # uncomment for debugging Kerberos authentication
-      KAFKA_LOG4J_LOGGERS: kafka.authorizer.logger=INFO,org.apache.kafka.common.security.kerberos=TRACE
+      #KAFKA_LOG4J_LOGGERS: kafka.authorizer.logger=INFO,org.apache.kafka.common.security.kerberos=TRACE
       # uncomment for debugging LDAP searches
       #KAFKA_LOG4J_LOGGERS: kafka.authorizer.logger=INFO,io.confluent.security.auth.provider.ldap=TRACE
       #KAFKA_OPTS: '-Djavax.net.debug=ssl'
@@ -624,7 +624,7 @@ services:
       # JVM Opts
       KAFKA_OPTS: -Djava.security.auth.login.config=/etc/kafka/jaas.conf
                   -Djava.security.krb5.conf=/etc/krb5.conf
-                  -Dsun.security.krb5.debug=true
+                  #-Dsun.security.krb5.debug=true
     volumes:
       - ./secrets/gssapi-zoo-client-jaas.conf:/etc/kafka/jaas.conf:ro
       - ./kerberos/keytabs/kafka.keytab:/etc/security/keytabs/kafka.keytab:ro
@@ -841,7 +841,7 @@ services:
       # logging
       KAFKA_LOG4J_ROOT_LOGLEVEL: INFO
       # uncomment for debugging Kerberos authentication
-      KAFKA_LOG4J_LOGGERS: kafka.authorizer.logger=INFO,org.apache.kafka.common.security.kerberos=TRACE
+      #KAFKA_LOG4J_LOGGERS: kafka.authorizer.logger=INFO,org.apache.kafka.common.security.kerberos=TRACE
       # uncomment for debugging LDAP searches
       #KAFKA_LOG4J_LOGGERS: kafka.authorizer.logger=INFO,io.confluent.security.auth.provider.ldap=TRACE
       #KAFKA_OPTS: '-Djavax.net.debug=ssl'
@@ -850,7 +850,7 @@ services:
       # JVM Opts
       KAFKA_OPTS: -Djava.security.auth.login.config=/etc/kafka/jaas.conf
                   -Djava.security.krb5.conf=/etc/krb5.conf
-                  -Dsun.security.krb5.debug=true
+                  #-Dsun.security.krb5.debug=true
     volumes:
       - ./secrets/gssapi-zoo-client-jaas.conf:/etc/kafka/jaas.conf:ro
       - ./kerberos/keytabs/kafka.keytab:/etc/security/keytabs/kafka.keytab:ro
@@ -1256,6 +1256,8 @@ services:
       # logging
       KSQL_LOG4J_ROOT_LOGLEVEL: WARN
     volumes:
+      - ./secrets/kerberos/security/keytabs/ksql.keytab:/etc/security/keytabs/ksql.keytab:ro
+      - ./secrets/kerberos/krb5.conf:/etc/krb5.conf:ro
       - ./certs:/var/ssl/private:ro
     networks:
       - kafka-network
@@ -1418,7 +1420,8 @@ services:
     volumes:
       - ./volumes/c3/data:/var/lib/c3/data
       - ./certs:/var/ssl/private:ro
-      - ./secrets:/etc/c3/secrets:ro
+      - ./secrets/kerberos/security/keytabs/c3.keytab:/etc/security/keytabs/c3.keytab:ro
+      - ./secrets/kerberos/krb5.conf:/etc/krb5.conf:ro
     networks:
       - kafka-network
 
@@ -1478,6 +1481,7 @@ services:
     networks:
       - kafka-network
 
+  # TODO:  We haven't been able to get the Kerberos conenctivity to the brokers working through a load balancer
   lb:
     image: nginx:${NGINX_VERSION}
     hostname: lb

@@ -326,6 +326,42 @@ gssapi_client_local() {
     export KAFKA_CONNECT_URL="https://localhost:8083"
 }
 
+gssapi_super() {
+    echo "Setting \"gssapi_super\" environment variables"
+    export SSL="true"
+    export RBAC="false"
+    export SASL="true"
+    export KERBEROS="true"
+    export BROKER_URL="kafka1.${DOMAIN}:29093,kafka2.${DOMAIN}:29094,kafka3.${DOMAIN}:29095"
+    export KAFKA_CONFIG="/scripts/config/gssapi.config" 
+    export KEYSTORE_DIR="/var/ssl/private"
+    export KEYSTORE_PASSWORD="serverpassword"
+    export ZOO1_URL="zoo1.${DOMAIN}:2181"
+    export ZOO2_URL="zoo2.${DOMAIN}:2182"
+    export ZOO3_URL="zoo3.${DOMAIN}:2183"
+    export SCHEMA_URL="https://schema1:8081"
+    export MDS_URL="https://kafka1:8091"
+    export KAFKA_CONNECT_URL="https://connect1:8083"
+}
+
+gssapi_super_local() {
+    echo "Setting \"gssapi_local\" environment variables"
+    export SSL="true"
+    export RBAC="false"
+    export SASL="true"
+    export KERBEROS="true"
+    export BROKER_URL="localhost:9093,localhost:9094,localhost:9095"
+    export KAFKA_CONFIG="../config/gssapi_local.config" 
+    export KEYSTORE_DIR="../../../certs"
+    export KEYSTORE_PASSWORD="serverpassword"
+    export ZOO1_URL="localhost:2181"
+    export ZOO2_URL="localhost:2182"
+    export ZOO3_URL="localhost:2183"
+    export SCHEMA_URL="https://localhost:8081"
+    export MDS_URL="https://localhost:8091"
+    export KAFKA_CONNECT_URL="https://localhost:8083"
+}
+
 # env from user input
 [[ -z "$1" ]] && { echo "Environment not specified" ; exit 1; }
 declare -a ENV=$1

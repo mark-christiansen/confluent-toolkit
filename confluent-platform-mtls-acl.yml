@@ -1,6 +1,8 @@
 version: '3.5'
 services:
 
+################## ZOOKEEPER ##################
+
   zoo1:
     image: confluentinc/cp-zookeeper:${CONFLUENT_VERSION}
     hostname: zoo1
@@ -142,6 +144,8 @@ services:
       interval: 20s
       timeout: 10s
       retries: 20
+
+################## BROKERS ##################
 
   kafka1:
     image: confluentinc/cp-server:${CONFLUENT_VERSION}
@@ -387,28 +391,7 @@ services:
       timeout: 10s
       retries: 30
 
-  lb:
-    image: nginx:${NGINX_VERSION}
-    hostname: lb
-    container_name: lb
-    links:
-      - kafka1
-      - kafka2
-      - kafka3
-    depends_on:
-      kafka1:
-        condition: service_healthy
-      kafka2:
-        condition: service_healthy
-      kafka3:
-        condition: service_healthy
-    ports:
-      - "9092:9092"
-      - "29092:29092"
-    volumes:
-      - ./nginx/nginx-mtls-acl.conf:/etc/nginx/nginx.conf:ro
-    networks:
-      - kafka-network
+################## CLIENT ##################
 
   client:
     image: kafka-client:0.0.1
@@ -433,6 +416,9 @@ services:
         cd /scripts/setup
         ./create-schema-registry-acls.sh mtls 1
         ./create-kafka-connect-acls.sh mtls 1
+        ./create-ksql-acls.sh mtls
+        ./create-client-acls.sh mtls
+        ./create-control-center-acls.sh mtls
         touch /tmp/initialized
         tail -f /dev/null
     volumes:
@@ -446,6 +432,8 @@ services:
       interval: 10s
       timeout: 10s
       retries: 10
+
+################## SCHEMA REGISTRY ##################
 
   schema1:
     image: confluentinc/cp-schema-registry:${CONFLUENT_VERSION}
@@ -491,6 +479,8 @@ services:
       interval: 10s
       timeout: 10s
       retries: 10
+
+################## KAFKA CONNECT ##################
 
   connect1:
     image: confluentinc/cp-server-connect:${CONFLUENT_VERSION}
@@ -575,55 +565,234 @@ services:
       timeout: 10s
       retries: 10
 
-#  control-center:
-#    image: confluentinc/cp-enterprise-control-center:${CONFLUENT_VERSION}
-#    hostname: control-center
-#    container_name: control-center
-#    depends_on:
-#      - schema1
-#      - connect1
-#    ports:
-#      - "9021:9021"
-#    environment:
-#      CONTROL_CENTER_BOOTSTRAP_SERVERS: 'SSL://lb:29092'
-#      CONTROL_CENTER_SSL_KEYSTORE_LOCATION: '/var/ssl/private/c3.${DOMAIN}.keystore.jks'
-#      CONTROL_CENTER_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-#      CONTROL_CENTER_SSL_KEY_PASSWORD: ${KEYSTORE_PASSWORD}
-#      CONTROL_CENTER_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/c3.${DOMAIN}.truststore.jks'
-#      CONTROL_CENTER_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-#      # schema registry
-#      CONTROL_CENTER_SCHEMA_REGISTRY_SCHEMA1_URL: "https://schema1:8081"
-#      CONTROL_CENTER_SCHEMA_REGISTRY_SCHEMA1_SSL_KEYSTORE_LOCATION: '/var/ssl/private/c3.${DOMAIN}.keystore.jks'
-#      CONTROL_CENTER_SCHEMA_REGISTRY_SCHEMA1_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-#      CONTROL_CENTER_SCHEMA_REGISTRY_SCHEMA1_SSL_KEY_PASSWORD: ${KEYSTORE_PASSWORD}
-#      CONTROL_CENTER_SCHEMA_REGISTRY_SCHEMA1_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/c3.${DOMAIN}.truststore.jks'
-#      CONTROL_CENTER_SCHEMA_REGISTRY_SCHEMA1_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-#      # streams
-#      CONTROL_CENTER_STREAMS_SECURITY_PROTOCOL: 'SSL'
-#      CONTROL_CENTER_STREAMS_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/c3.${DOMAIN}.truststore.jks'
-#      CONTROL_CENTER_STREAMS_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-#      CONTROL_CENTER_STREAMS_SSL_KEYSTORE_LOCATION: '/var/ssl/private/c3.${DOMAIN}.keystore.jks'
-#      CONTROL_CENTER_STREAMS_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-#      CONTROL_CENTER_STREAMS_SSL_KEY_PASSWORD: ${KEYSTORE_PASSWORD}
-#      # reset
-#      CONTROL_CENTER_REST_LISTENERS: https://0.0.0.0:9021
-#      CONTROL_CENTER_REST_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/c3.${DOMAIN}.truststore.jks'
-#      CONTROL_CENTER_REST_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-#      CONTROL_CENTER_REST_SSL_KEYSTORE_LOCATION: '/var/ssl/private/c3.${DOMAIN}.keystore.jks'
-#      CONTROL_CENTER_REST_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-#      CONTROL_CENTER_REST_SSL_KEY_PASSWORD: ${KEYSTORE_PASSWORD}
-#      # connect
-#      CONTROL_CENTER_CONNECT_CONNECT1_CLUSTER: https://connect1:8083
-#      # topics
-#      CONTROL_CENTER_REPLICATION_FACTOR: 3
-#      CONTROL_CENTER_INTERNAL_TOPICS_PARTITIONS: 1
-#      CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: 1
-#      CONFLUENT_METRICS_TOPIC_REPLICATION: 1
-#      PORT: 9021
-#    volumes:
-#      - ./certs:/var/ssl/private:ro
-#    networks:
-#      - kafka-network
+################## KSQL ##################
+
+  ksql1:
+    image: confluentinc/cp-ksqldb-server:${CONFLUENT_VERSION}
+    hostname: ksql1
+    container_name: ksql1
+    links:
+      - connect1
+    depends_on:
+      connect1:
+        condition: service_healthy
+    ports:
+      - 8088:8088
+    environment:
+      CUB_CLASSPATH: '/usr/share/java/confluent-security/ksql/*:/usr/share/java/ksqldb-server/*:/usr/share/java/cp-base-new/*'
+      # general
+      KSQL_KSQL_SERVICE_ID: "ksql-cluster"
+      KSQL_KSQL_STREAMS_REPLICATION_FACTOR: 3
+      KSQL_KSQL_INTERNAL_TOPIC_REPLICAS: 3
+      KSQL_KSQL_STREAMS_NUM_STREAM_THREADS: 1
+      KSQL_KSQL_LOGGING_PROCESSING_TOPIC_REPLICATION_FACTOR: 3
+      KSQL_KSQL_LOGGING_PROCESSING_TOPIC_AUTO_CREATE: 'true'
+      KSQL_KSQL_LOGGING_PROCESSING_STREAM_AUTO_CREATE: 'true'
+      KSQL_PRODUCER_ENABLE_IDEMPOTENCE: 'true'
+      KSQL_CACHE_MAX_BYTES_BUFFERING: 0
+      # rest service
+      KSQL_LISTENERS: "https://0.0.0.0:8088"
+      KSQL_HOST_NAME: ksql1     
+      # broker connection
+      # KSQL_BOOTSTRAP_SERVERS: lb.${DOMAIN}:29092
+      KSQL_BOOTSTRAP_SERVERS: kafka1.${DOMAIN}:29093,kafka2.${DOMAIN}:29094,kafka3.${DOMAIN}:29095
+      # encryption
+      KSQL_SSL_KEYSTORE_LOCATION: '/var/ssl/private/ksql1.${DOMAIN}.keystore.jks'
+      KSQL_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+      KSQL_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/ksql1.${DOMAIN}.truststore.jks'
+      KSQL_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+      KSQL_SSL_ENABLED_PROTOCOLS: "TLSv1.3,TLSv1.2" # Before v6.1.0: disabling TLSv1.x is required 
+      KSQL_SSL_CIPHER_SUITES: ${SSL_CIPHER_SUITES}
+      # authentication
+      KSQL_SECURITY_PROTOCOL: SASL_SSL
+      KSQL_SASL_MECHANISM: GSSAPI
+      KSQL_SASL_KERBEROS_SERVICE_NAME: kafka
+      KSQL_SASL_JAAS_CONFIG: "com.sun.security.auth.module.Krb5LoginModule required \
+        useKeyTab=true \
+        storeKey=true \
+        keyTab=\"/etc/security/keytabs/ksql.keytab\" \
+        principal=\"ksql1@${REALM}\";"
+      # schema registry
+      KSQL_KSQL_SCHEMA_REGISTRY_URL: https://schema1:8081
+      KSQL_KSQL_SCHEMA_REGISTRY_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/ksql1.${DOMAIN}.truststore.jks'
+      KSQL_KSQL_SCHEMA_REGISTRY_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+      KSQL_KSQL_SCHEMA_REGISTRY_BASIC_AUTH_CREDENTIALS_SOURCE: USER_INFO
+      KSQL_KSQL_SCHEMA_REGISTRY_BASIC_AUTH_USER_INFO: ksql:ksql-secret
+      # Confluent Monitoring Interceptors for Control Center streams monitoring
+      KSQL_PRODUCER_INTERCEPTOR_CLASSES: "io.confluent.monitoring.clients.interceptor.MonitoringProducerInterceptor"
+      KSQL_CONSUMER_INTERCEPTOR_CLASSES: "io.confluent.monitoring.clients.interceptor.MonitoringConsumerInterceptor"    
+      KSQL_CONFLUENT_MONITORING_INTERCEPTOR_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/ksql1.${DOMAIN}.truststore.jks'
+      KSQL_CONFLUENT_MONITORING_INTERCEPTOR_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+      KSQL_CONFLUENT_MONITORING_INTERCEPTOR_SSL_KEYSTORE_LOCATION: '/var/ssl/private/ksql1.${DOMAIN}.keystore.jks'
+      KSQL_CONFLUENT_MONITORING_INTERCEPTOR_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+      KSQL_CONFLUENT_MONITORING_INTERCEPTOR_SECURITY_PROTOCOL: SASL_SSL
+      KSQL_CONFLUENT_MONITORING_INTERCEPTOR_SASL_MECHANISM: GSSAPI
+      KSQL_CONFLUENT_MONITORING_INTERCEPTOR_SASL_LOGIN_CALLBACK_HANDLER_CLASS: io.confluent.kafka.clients.plugins.auth.token.TokenUserLoginCallbackHandler
+      KSQL_CONFLUENT_MONITORING_INTERCEPTOR_SASL_JAAS_CONFIG: "com.sun.security.auth.module.Krb5LoginModule required \
+        useKeyTab=true \
+        storeKey=true \
+        keyTab=\"/etc/security/keytabs/ksql.keytab\" \
+        principal=\"ksql1@${REALM}\";"
+      # logging
+      KSQL_LOG4J_ROOT_LOGLEVEL: INFO
+    volumes:
+      - ./kerberos/keytabs/ksql.keytab:/etc/security/keytabs/ksql.keytab:ro
+      - ./kerberos/krb5.conf:/etc/krb5.conf:ro
+      - ./certs:/var/ssl/private:ro
+    networks:
+      - kafka-network
+    healthcheck:
+      test: ["CMD", "bash", "-c", "curl -k -u ksql:ksql-secret https://ksql1.${DOMAIN}:8088/healthcheck | grep '\"isHealthy\":true'"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+
+  ksql-cli:
+    image: confluentinc/cp-ksqldb-cli:${CONFLUENT_VERSION}
+    hostname: ksql-cli
+    container_name: ksql-cli
+    depends_on:
+      ksql1:
+        condition: service_healthy
+    volumes:
+      - ./certs:/var/ssl/private:ro
+      - ./ksql:/config:ro
+    entrypoint: /bin/sh
+    tty: true
+    networks:
+      - kafka-network
+      
+################## CONTROL CENTER ##################
+
+  c3:
+    image: confluentinc/cp-enterprise-control-center:latest
+    container_name: c3
+    hostname: c3
+    links:
+      - client
+    depends_on:
+      client:
+        condition: service_healthy
+    ports:
+      - 9021:9021
+    environment:
+      # general
+      CUB_CLASSPATH: '/usr/share/java/confluent-control-center/*:/usr/share/java/rest-utils/*:/usr/share/java/confluent-common/*:/usr/share/java/confluent-security/kafka-rest/*:/usr/share/java/kafka-rest/:/usr/share/java/cp-base-new/*'
+      CONTROL_CENTER_DATA_DIR: /var/lib/c3/data
+      CONTROL_CENTER_BOOTSTRAP_SERVERS: lb.${DOMAIN}:29092
+      # broker cluster 1
+      # CONTROL_CENTER_KAFKA_CLUSTER1_BOOTSTRAP_SERVERS: lb.${DOMAIN}:29092
+      CONTROL_CENTER_KAFKA_CLUSTER1_BOOTSTRAP_SERVERS: lb.${DOMAIN}:29092
+      CONTROL_CENTER_REST_AUTHENTICATION_METHOD: BASIC
+      CONTROL_CENTER_REST_AUTHENTICATION_REALM: c3
+      CONTROL_CENTER_REST_AUTHENTICATION_ROLES: Administrators,Restricted
+      CONTROL_CENTER_AUTH_RESTRICTED_ROLES: Restricted
+      CONTROL_CENTER_AUTH_SESSION_EXPIRATION_MS: 60000
+      # broker cluster 1 - encryption
+      CONTROL_CENTER_KAFKA_CLUSTER1_SSL_KEYSTORE_LOCATION: /var/ssl/private/c3.${DOMAIN}.keystore.jks
+      CONTROL_CENTER_KAFKA_CLUSTER1_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+      CONTROL_CENTER_KAFKA_CLUSTER1_SSL_KEY_PASSWORD: ${KEYSTORE_PASSWORD}
+      CONTROL_CENTER_KAFKA_CLUSTER1_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/c3.${DOMAIN}.truststore.jks
+      CONTROL_CENTER_KAFKA_CLUSTER1_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+      # broker cluster 1 - authentication
+      CONTROL_CENTER_KAFKA_CLUSTER1_SECURITY_PROTOCOL: SSL
+      # streams encryption
+      CONTROL_CENTER_STREAMS_SSL_CIPHER_SUITES: ${SSL_CIPHER_SUITES}
+      CONTROL_CENTER_STREAMS_SSL_KEYSTORE_LOCATION: /var/ssl/private/c3.${DOMAIN}.keystore.jks
+      CONTROL_CENTER_STREAMS_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+      CONTROL_CENTER_STREAMS_SSL_KEY_PASSWORD: ${KEYSTORE_PASSWORD}
+      CONTROL_CENTER_STREAMS_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/c3.${DOMAIN}.truststore.jks
+      CONTROL_CENTER_STREAMS_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+      # streams connection - authentication
+      CONTROL_CENTER_STREAMS_SECURITY_PROTOCOL: SSL
+      # streams producer encryption
+      CONTROL_CENTER_STREAMS_PRODUCER_SSL_KEYSTORE_LOCATION: /var/ssl/private/c3.${DOMAIN}.keystore.jks
+      CONTROL_CENTER_STREAMS_PRODUCER_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+      CONTROL_CENTER_STREAMS_PRODUCER_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/c3.${DOMAIN}.truststore.jks
+      CONTROL_CENTER_STREAMS_PRODUCER_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+      # streams producer authentication
+      CONTROL_CENTER_STREAMS_PRODUCER_SECURITY_PROTOCOL: SSL
+      # Amount of heap to use for internal caches. Increase for better throughput
+      CONTROL_CENTER_STREAMS_CACHE_MAX_BYTES_BUFFERING: 100000000
+      CONTROL_CENTER_STREAMS_CONSUMER_REQUEST_TIMEOUT_MS: "960032"
+      CONTROL_CENTER_STREAMS_NUM_STREAM_THREADS: 1
+      # metrics reporter connection
+      CONTROL_CENTER_METRICS_REPORTER_SECURITY_PROTOCOL: SSL
+      # metrics reporter encryption
+      CONTROL_CENTER_METRICS_REPORTER_SSL_KEYSTORE_LOCATION: /var/ssl/private/c3.${DOMAIN}.keystore.jks
+      CONTROL_CENTER_METRICS_REPORTER_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+      CONTROL_CENTER_METRICS_REPORTER_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/c3.${DOMAIN}.truststore.jks
+      CONTROL_CENTER_METRICS_REPORTER_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+      # topic partitions
+      CONTROL_CENTER_REPLICATION_FACTOR: 3
+      CONTROL_CENTER_INTERNAL_TOPICS_PARTITIONS: 1
+      CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_REPLICATION: 3
+      CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: 1
+      CONTROL_CENTER_METRICS_TOPIC_REPLICATION: 3
+      CONTROL_CENTER_METRICS_TOPIC_PARTITIONS: 1
+      # Control Center UI SSL
+      CONTROL_CENTER_REST_LISTENERS: https://0.0.0.0:9021
+      CONTROL_CENTER_REST_SSL_KEYSTORE_LOCATION: /var/ssl/private/c3.${DOMAIN}.keystore.jks
+      CONTROL_CENTER_REST_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+      CONTROL_CENTER_REST_SSL_KEY_PASSWORD: ${KEYSTORE_PASSWORD}
+      CONTROL_CENTER_REST_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/c3.${DOMAIN}.truststore.jks
+      CONTROL_CENTER_REST_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+      CONTROL_CENTER_REST_SSL_CIPHER_SUITES: ${SSL_CIPHER_SUITES}
+      # Connect
+      CONTROL_CENTER_CONNECT_CONNECT1_CLUSTER: https://connect1:8083
+      CONTROL_CENTER_CONNECT_CONNECT1_SSL_KEYSTORE_LOCATION: /var/ssl/private/c3.${DOMAIN}.keystore.jks
+      CONTROL_CENTER_CONNECT_CONNECT1_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+      CONTROL_CENTER_CONNECT_CONNECT1_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/c3.${DOMAIN}.truststore.jks
+      CONTROL_CENTER_CONNECT_CONNECT1_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+      # Schema Registry
+      CONTROL_CENTER_SCHEMA_REGISTRY_URL: https://schema1:8081
+      CONTROL_CENTER_SCHEMA_REGISTRY_SR1_SSL_KEYSTORE_LOCATION: /var/ssl/private/c3.${DOMAIN}.keystore.jks
+      CONTROL_CENTER_SCHEMA_REGISTRY_SCHEMA_REGISTRY_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+      CONTROL_CENTER_SCHEMA_REGISTRY_SCHEMA_REGISTRY_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/c3.${DOMAIN}.truststore.jks
+      CONTROL_CENTER_SCHEMA_REGISTRY_SCHEMA_REGISTRY_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+      # KSQL
+      CONTROL_CENTER_KSQL_KSQL_ADVERTISED_URL: https://ksql1:8088
+      CONTROL_CENTER_KSQL_KSQL_URL: https://ksql1:8088
+      CONTROL_CENTER_KSQL_KSQL_SSL_KEYSTORE_LOCATION: /var/ssl/private/c3.${DOMAIN}.keystore.jks
+      CONTROL_CENTER_KSQL_KSQL_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+      CONTROL_CENTER_KSQL_KSQL_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/c3.${DOMAIN}.truststore.jks
+      CONTROL_CENTER_KSQL_KSQL_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
+      CONTROL_CENTER_KSQL_KSQL_BASIC_AUTH_USER_INFO: c3:c3-secret
+      # logging
+      CONTROL_CENTER_LOG4J_ROOT_LOGLEVEL: "INFO"
+      CONTROL_CENTER_OPTS: "-Djava.security.auth.login.config=/etc/kafka/jaas.conf"
+    volumes:
+      - ./volumes/c3/data:/var/lib/c3/data
+      - ./certs:/var/ssl/private:ro
+      - ./secrets/c3-server-jaas.conf:/etc/kafka/jaas.conf:ro
+      - ./secrets/c3-password.properties:/etc/kafka/password.properties:ro
+    networks:
+      - kafka-network
+
+################## OTHER ##################
+
+  lb:
+    image: nginx:${NGINX_VERSION}
+    hostname: lb
+    container_name: lb
+    links:
+      - kafka1
+      - kafka2
+      - kafka3
+    depends_on:
+      kafka1:
+        condition: service_healthy
+      kafka2:
+        condition: service_healthy
+      kafka3:
+        condition: service_healthy
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    volumes:
+      - ./nginx/nginx-mtls-acl.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - kafka-network
 
   postgres:
     image: postgres

@@ -48,46 +48,79 @@ until $(curl -k $BASIC_AUTH --output /dev/null --silent --head --fail $KAFKA_CON
 done
 echo ""
 echo "Connect server $KAFKA_CONNECT_URL is ready to accept requests"
-
+ 
 if [[ $SSL == "true" ]]; then
 
   KEYSTORE_LOCATION="$KEYSTORE_DIR/$PRINCIPAL.$DOMAIN.keystore.jks"
   TRUSTSTORE_LOCATION="$KEYSTORE_DIR/$PRINCIPAL.$DOMAIN.truststore.jks"
   PASSWORD="datagen-secret"
 
+  # SSL and SASL
   if [[ $SASL == "true" ]]; then
 
-    SASL_MECHANISM="PLAIN"
-    JAAS_CONFIG="org.apache.kafka.common.security.plain.PlainLoginModule required username=\\\"\${vault:secret/datagen:cp_username}\\\" password=\\\"\${vault:secret/datagen:cp_password}\\\";"
-    if [[ $ENV == "scram" ]]; then
-      SASL_MECHANISM="SCRAM-SHA-512"
-      JAAS_CONFIG="org.apache.kafka.common.security.scram.ScramLoginModule required username=\\\"\${vault:secret/datagen:cp_username}\\\" password=\\\"\${vault:secret/datagen:cp_password}\\\";"
-    elif [[ $ENV == "gssapi" ]]; then
-      SASL_MECHANISM="GSSAPI"
-      JAAS_CONFIG="com.sun.security.auth.module.Krb5LoginModule required useKeyTab=true storeKey=true keyTab=\\\"/etc/security/keytabs/connect.keytab\\\" principal=\\\"\${vault:secret/datagen:cp_username}@${REALM}\\\";"
-    fi
+    SASL_MECHANISM=""
+    JAAS_CONFIG=""
+    KEYSTORE_SECRET=""
+    USERNAME=""
+    PASSWORD=""
 
-    echo "Creating datagen connector secrets"
-    # create username secret
-    echo "curl -k $BASIC_AUTH --header \"Content-Type: application/json\" -X POST --data \"{\"secret\": \"$PRINCIPAL\"}\" $KAFKA_CONNECT_URL/secret/paths/$PRINCIPAL/keys/username/versions"
-    HTTP_CODE=$(curl -k $BASIC_AUTH --header "Content-Type: application/json" -X POST --data "{\"secret\": \"$PRINCIPAL\"}" --write-out "%{http_code}" \
-    $KAFKA_CONNECT_URL/secret/paths/$PRINCIPAL/keys/username/versions)
-    if [[ ${HTTP_CODE} -lt 200 || ${HTTP_CODE} -gt 299 ]] ; then
-      echo "Unable to create username secret for datagen connector" && exit
-    fi
+    # SSL, SASL and RBAC
+    if [[ $RBAC == "true" ]]; then
 
-    # create password secret
-    HTTP_CODE=$(curl -k $BASIC_AUTH --header "Content-Type: application/json" -X POST --data "{\"secret\": \"$PASSWORD\"}" --write-out "%{http_code}" \
-    $KAFKA_CONNECT_URL/secret/paths/$PRINCIPAL/keys/password/versions)
-    if [[ ${HTTP_CODE} -lt 200 || ${HTTP_CODE} -gt 299 ]] ; then
-      echo "Unable to create password secret for datagen connector" && exit
-    fi
+      SASL_MECHANISM="PLAIN"
+      JAAS_CONFIG="org.apache.kafka.common.security.plain.PlainLoginModule required username=\\\"\${vault:secret/datagen:cp_username}\\\" password=\\\"\${vault:secret/datagen:cp_password}\\\";"
+      KEYSTORE_SECRET="\${secret:datagen:keypassword}"
+      USERNAME="\${vault:secret/datagen:cp_username}"
+      PASSWORD="\${vault:secret/datagen:cp_password}"
 
-    # create keystore password secret
-    HTTP_CODE=$(curl -k $BASIC_AUTH --header "Content-Type: application/json" -X POST --data "{\"secret\": \"$KEYSTORE_PASSWORD\"}" --write-out "%{http_code}" \
-    $KAFKA_CONNECT_URL/secret/paths/$PRINCIPAL/keys/keypassword/versions)
-    if [[ ${HTTP_CODE} -lt 200 || ${HTTP_CODE} -gt 299 ]] ; then
-      echo "Unable to create keystore password secret for datagen connector" && exit
+      if [[ $ENV == "scram" ]]; then
+        SASL_MECHANISM="SCRAM-SHA-512"
+        JAAS_CONFIG="org.apache.kafka.common.security.scram.ScramLoginModule required username=\\\"\${vault:secret/datagen:cp_username}\\\" password=\\\"\${vault:secret/datagen:cp_password}\\\";"
+      elif [[ $ENV == "gssapi" ]]; then
+        SASL_MECHANISM="GSSAPI"
+        JAAS_CONFIG="com.sun.security.auth.module.Krb5LoginModule required useKeyTab=true storeKey=true keyTab=\\\"/etc/security/keytabs/connect.keytab\\\" principal=\\\"\${vault:secret/datagen:cp_username}@${REALM}\\\";"
+      fi
+
+      echo "Creating datagen connector secrets"
+      # create username secret
+      echo "curl -k $BASIC_AUTH --header \"Content-Type: application/json\" -X POST --data \"{\"secret\": \"$PRINCIPAL\"}\" $KAFKA_CONNECT_URL/secret/paths/$PRINCIPAL/keys/username/versions"
+      HTTP_CODE=$(curl -k $BASIC_AUTH --header "Content-Type: application/json" -X POST --data "{\"secret\": \"$PRINCIPAL\"}" --write-out "%{http_code}" \
+      $KAFKA_CONNECT_URL/secret/paths/$PRINCIPAL/keys/username/versions)
+      if [[ ${HTTP_CODE} -lt 200 || ${HTTP_CODE} -gt 299 ]] ; then
+        echo "Unable to create username secret for datagen connector" && exit
+      fi
+
+      # create password secret
+      HTTP_CODE=$(curl -k $BASIC_AUTH --header "Content-Type: application/json" -X POST --data "{\"secret\": \"$PASSWORD\"}" --write-out "%{http_code}" \
+      $KAFKA_CONNECT_URL/secret/paths/$PRINCIPAL/keys/password/versions)
+      if [[ ${HTTP_CODE} -lt 200 || ${HTTP_CODE} -gt 299 ]] ; then
+        echo "Unable to create password secret for datagen connector" && exit
+      fi
+
+      # create keystore password secret
+      HTTP_CODE=$(curl -k $BASIC_AUTH --header "Content-Type: application/json" -X POST --data "{\"secret\": \"$KEYSTORE_PASSWORD\"}" --write-out "%{http_code}" \
+      $KAFKA_CONNECT_URL/secret/paths/$PRINCIPAL/keys/keypassword/versions)
+      if [[ ${HTTP_CODE} -lt 200 || ${HTTP_CODE} -gt 299 ]] ; then
+        echo "Unable to create keystore password secret for datagen connector" && exit
+      fi
+
+    # SSL, SASL and ACLs (no connect secret registry)
+    else
+
+      USERNAME="$PRINCIPAL"
+      PASSWORD="datagen-secret"
+      SASL_MECHANISM="PLAIN"
+      JAAS_CONFIG="org.apache.kafka.common.security.plain.PlainLoginModule required username=\\\"${USERNAME}\\\" password=\\\"${PASSWORD}\\\";"
+      KEYSTORE_SECRET="$KEYSTORE_PASSWORD"
+
+      if [[ $ENV == "scram" ]]; then
+        SASL_MECHANISM="SCRAM-SHA-512"
+        JAAS_CONFIG="org.apache.kafka.common.security.scram.ScramLoginModule required username=\\\"${USERNAME}\\\" password=\\\"${PASSWORD}\\\";"
+      elif [[ $ENV == "gssapi" ]] || [[ $ENV == "gssapi_super" ]]; then
+        SASL_MECHANISM="GSSAPI"
+        JAAS_CONFIG="com.sun.security.auth.module.Krb5LoginModule required useKeyTab=true storeKey=true keyTab=\\\"/etc/security/keytabs/connect.keytab\\\" principal=\\\"${USERNAME}@${REALM}\\\";"
+      fi
+
     fi
 
     # create datagen connector for SASL SSL env
@@ -104,12 +137,12 @@ if [[ $SSL == "true" ]]; then
     "value.converter": "io.confluent.connect.avro.AvroConverter",
     "value.converter.schema.registry.url": "$SCHEMA_URL",
     "value.converter.schema.registry.ssl.keystore.location": "$KEYSTORE_LOCATION",
-    "value.converter.schema.registry.ssl.keystore.password": "\${secret:datagen:keypassword}",
-    "value.converter.schema.registry.ssl.key.password": "\${secret:datagen:keypassword}",
+    "value.converter.schema.registry.ssl.keystore.password": "$KEYSTORE_SECRET",
+    "value.converter.schema.registry.ssl.key.password": "$KEYSTORE_SECRET",
     "value.converter.schema.registry.ssl.truststore.location": "$TRUSTSTORE_LOCATION",
-    "value.converter.schema.registry.ssl.truststore.password": "\${secret:datagen:keypassword}",
+    "value.converter.schema.registry.ssl.truststore.password": "$KEYSTORE_SECRET",
     "value.converter.schemas.enable": "true",
-    "value.converter.schema.registry.basic.auth.user.info": "\${secret:datagen:username}:\${secret:datagen:password}",
+    "value.converter.schema.registry.basic.auth.user.info": "$USERNAME:$PASSWORD",
     "value.converter.schema.registry.basic.auth.credentials.source": "USER_INFO",
     "max.interval": "1000",
     "iterations": "100000",
@@ -121,6 +154,8 @@ if [[ $SSL == "true" ]]; then
 EOF
     )
 
+
+  # Just SSL, No SASL
   else
 
     # create datagen connector for mTLS env

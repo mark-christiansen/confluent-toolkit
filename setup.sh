@@ -53,7 +53,7 @@ elif [[ $ENV == "scram-rbac" ]]; then
 elif [[ $ENV == "mtls-acl" ]]; then
   ROLE="mtls"
 elif [[ $ENV == "gssapi-acl" ]]; then
-  ROLE="gssapi"
+  ROLE="gssapi_super"
 elif [[ $ENV == "gssapi-rbac" ]]; then
   ROLE="gssapi"
 else 

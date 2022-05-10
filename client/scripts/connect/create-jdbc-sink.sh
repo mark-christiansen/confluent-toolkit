@@ -64,52 +64,89 @@ if [[ $SSL == "true" ]]; then
   DB_USERNAME="postgres"
   DB_PASSWORD="postgrespass"
 
+  # SSL and SASL
   if [[ $SASL == "true" ]]; then
 
-    SASL_MECHANISM="PLAIN"
-    JAAS_CONFIG="org.apache.kafka.common.security.plain.PlainLoginModule required username=\\\"\${vault:secret/jdbcsink:cp_username}\\\" password=\\\"\${vault:secret/jdbcsink:cp_password}\\\";"
-    if [[ $ENV == "scram" ]]; then
-      SASL_MECHANISM="SCRAM-SHA-512"
-      JAAS_CONFIG="org.apache.kafka.common.security.scram.ScramLoginModule required username=\\\"\${vault:secret/jdbcsink:cp_username}\\\" password=\\\"\${vault:secret/jdbcsink:cp_password}\\\";"
-    elif [[ $ENV == "gssapi" ]]; then
-      SASL_MECHANISM="GSSAPI"
-      JAAS_CONFIG="com.sun.security.auth.module.Krb5LoginModule required useKeyTab=true storeKey=true keyTab=\\\"/etc/security/keytabs/connect.keytab\\\" principal=\\\"\${vault:secret/jdbcsink:cp_username}@${REALM}\\\";"
-    fi
+    SASL_MECHANISM=""
+    JAAS_CONFIG=""
+    KEYSTORE_SECRET=""
+    USERNAME=""
+    PASSWORD=""
 
-    echo "Creating jdbcsink connector secrets"
-    # create username secret
-    HTTP_CODE=$(curl -k $BASIC_AUTH --header "Content-Type: application/json" -X POST --data "{\"secret\": \"$PRINCIPAL\"}" --write-out "%{http_code}" \
-    $KAFKA_CONNECT_URL/secret/paths/$PRINCIPAL/keys/username/versions)
-    if [[ ${HTTP_CODE} -lt 200 || ${HTTP_CODE} -gt 299 ]] ; then
-      echo "Unable to create username secret for jdbcsink connector" && exit
-    fi
+    # SSL, SASL and RBAC
+    if [[ $RBAC == "true" ]]; then
 
-    # create password secret
-    HTTP_CODE=$(curl -k $BASIC_AUTH --header "Content-Type: application/json" -X POST --data "{\"secret\": \"$PASSWORD\"}" --write-out "%{http_code}" \
-    $KAFKA_CONNECT_URL/secret/paths/$PRINCIPAL/keys/password/versions)
-    if [[ ${HTTP_CODE} -lt 200 || ${HTTP_CODE} -gt 299 ]] ; then
-      echo "Unable to create password secret for jdbcsink connector" && exit
-    fi
+      SASL_MECHANISM="PLAIN"
+      JAAS_CONFIG="org.apache.kafka.common.security.plain.PlainLoginModule required username=\\\"\${vault:secret/jdbcsink:cp_username}\\\" password=\\\"\${vault:secret/jdbcsink:cp_password}\\\";"
+      KEYSTORE_SECRET="\${secret:jdbcsink:keypassword}"
+      USERNAME="\${vault:secret/jdbcsink:cp_username}"
+      PASSWORD="\${vault:secret/jdbcsink:cp_password}"
+      DB_USERNAME_SECRET="\${vault:secret/jdbcsink:db_username}"
+      DB_PASSWORD_SECRET="\${vault:secret/jdbcsink:db_password}"
 
-    # create keystore password secret
-    HTTP_CODE=$(curl -k $BASIC_AUTH --header "Content-Type: application/json" -X POST --data "{\"secret\": \"$KEYSTORE_PASSWORD\"}" --write-out "%{http_code}" \
-    $KAFKA_CONNECT_URL/secret/paths/$PRINCIPAL/keys/keypassword/versions)
-    if [[ ${HTTP_CODE} -lt 200 || ${HTTP_CODE} -gt 299 ]] ; then
-      echo "Unable to create keystore password secret for jdbcsink connector" && exit
-    fi
+      if [[ $ENV == "scram" ]]; then
+        SASL_MECHANISM="SCRAM-SHA-512"
+        JAAS_CONFIG="org.apache.kafka.common.security.scram.ScramLoginModule required username=\\\"\${vault:secret/jdbcsink:cp_username}\\\" password=\\\"\${vault:secret/jdbcsink:cp_password}\\\";"
+      elif [[ $ENV == "gssapi" ]]; then
+        SASL_MECHANISM="GSSAPI"
+        JAAS_CONFIG="com.sun.security.auth.module.Krb5LoginModule required useKeyTab=true storeKey=true keyTab=\\\"/etc/security/keytabs/connect.keytab\\\" principal=\\\"\${vault:secret/jdbcsink:cp_username}@${REALM}\\\";"
+      fi
 
-    # create database username secret
-    HTTP_CODE=$(curl -k $BASIC_AUTH --header "Content-Type: application/json" -X POST --data "{\"secret\": \"$DB_USERNAME\"}" --write-out "%{http_code}" \
-    $KAFKA_CONNECT_URL/secret/paths/$PRINCIPAL/keys/dbusername/versions)
-    if [[ ${HTTP_CODE} -lt 200 || ${HTTP_CODE} -gt 299 ]] ; then
-      echo "Unable to create username secret for jdbcsink connector" && exit
-    fi
+      echo "Creating jdbcsink connector secrets"
+      # create username secret
+      HTTP_CODE=$(curl -k $BASIC_AUTH --header "Content-Type: application/json" -X POST --data "{\"secret\": \"$PRINCIPAL\"}" --write-out "%{http_code}" \
+      $KAFKA_CONNECT_URL/secret/paths/$PRINCIPAL/keys/username/versions)
+      if [[ ${HTTP_CODE} -lt 200 || ${HTTP_CODE} -gt 299 ]] ; then
+        echo "Unable to create username secret for jdbcsink connector" && exit
+      fi
 
-    # create database password secret
-    HTTP_CODE=$(curl -k $BASIC_AUTH --header "Content-Type: application/json" -X POST --data "{\"secret\": \"$DB_PASSWORD\"}" --write-out "%{http_code}" \
-    $KAFKA_CONNECT_URL/secret/paths/$PRINCIPAL/keys/dbpassword/versions)
-    if [[ ${HTTP_CODE} -lt 200 || ${HTTP_CODE} -gt 299 ]] ; then
-      echo "Unable to create password secret for jdbcsink connector" && exit
+      # create password secret
+      HTTP_CODE=$(curl -k $BASIC_AUTH --header "Content-Type: application/json" -X POST --data "{\"secret\": \"$PASSWORD\"}" --write-out "%{http_code}" \
+      $KAFKA_CONNECT_URL/secret/paths/$PRINCIPAL/keys/password/versions)
+      if [[ ${HTTP_CODE} -lt 200 || ${HTTP_CODE} -gt 299 ]] ; then
+        echo "Unable to create password secret for jdbcsink connector" && exit
+      fi
+
+      # create keystore password secret
+      HTTP_CODE=$(curl -k $BASIC_AUTH --header "Content-Type: application/json" -X POST --data "{\"secret\": \"$KEYSTORE_PASSWORD\"}" --write-out "%{http_code}" \
+      $KAFKA_CONNECT_URL/secret/paths/$PRINCIPAL/keys/keypassword/versions)
+      if [[ ${HTTP_CODE} -lt 200 || ${HTTP_CODE} -gt 299 ]] ; then
+        echo "Unable to create keystore password secret for jdbcsink connector" && exit
+      fi
+
+      # create database username secret
+      HTTP_CODE=$(curl -k $BASIC_AUTH --header "Content-Type: application/json" -X POST --data "{\"secret\": \"$DB_USERNAME\"}" --write-out "%{http_code}" \
+      $KAFKA_CONNECT_URL/secret/paths/$PRINCIPAL/keys/dbusername/versions)
+      if [[ ${HTTP_CODE} -lt 200 || ${HTTP_CODE} -gt 299 ]] ; then
+        echo "Unable to create username secret for jdbcsink connector" && exit
+      fi
+
+      # create database password secret
+      HTTP_CODE=$(curl -k $BASIC_AUTH --header "Content-Type: application/json" -X POST --data "{\"secret\": \"$DB_PASSWORD\"}" --write-out "%{http_code}" \
+      $KAFKA_CONNECT_URL/secret/paths/$PRINCIPAL/keys/dbpassword/versions)
+      if [[ ${HTTP_CODE} -lt 200 || ${HTTP_CODE} -gt 299 ]] ; then
+        echo "Unable to create password secret for jdbcsink connector" && exit
+      fi
+
+    # SSL, SASL and ACLs (no connect secret registry)
+    else
+
+      USERNAME="jdbcsink"
+      PASSWORD="jdbcsink-secret"
+      SASL_MECHANISM="PLAIN"
+      JAAS_CONFIG="org.apache.kafka.common.security.plain.PlainLoginModule required username=\\\"${USERNAME}\\\" password=\\\"${PASSWORD}\\\";"
+      KEYSTORE_SECRET="$KEYSTORE_PASSWORD"
+      DB_USERNAME_SECRET="$DB_USERNAME"
+      DB_PASSWORD_SECRET="$DB_PASSWORD"
+
+      if [[ $ENV == "scram" ]]; then
+        SASL_MECHANISM="SCRAM-SHA-512"
+        JAAS_CONFIG="org.apache.kafka.common.security.scram.ScramLoginModule required username=\\\"${USERNAME}\\\" password=\\\"${PASSWORD}\\\";"
+      elif [[ $ENV == "gssapi" ]] || [[ $ENV == "gssapi_super" ]]; then
+        SASL_MECHANISM="GSSAPI"
+        JAAS_CONFIG="com.sun.security.auth.module.Krb5LoginModule required useKeyTab=true storeKey=true keyTab=\\\"/etc/security/keytabs/connect.keytab\\\" principal=\\\"${USERNAME}@${REALM}\\\";"
+      fi
+
     fi
 
     # create jdbc sink connector for SASL SSL env
@@ -121,8 +158,8 @@ if [[ $SSL == "true" ]]; then
     "tasks.max": "1",
     "batch.size": "100",
     "connection.url": "jdbc:postgresql://postgres:5432/kafka",
-    "connection.user": "\${vault:secret/jdbcsink:db_username}",
-    "connection.password": "\${vault:secret/jdbcsink:db_password}",
+    "connection.user": "$DB_USERNAME_SECRET",
+    "connection.password": "$DB_PASSWORD_SECRET",
     "topics.regex": "env\\\\.app\\\\..*",
     "table.name.format": "\${topic}",
     "auto.create": "true",
@@ -143,12 +180,12 @@ if [[ $SSL == "true" ]]; then
     "value.converter": "io.confluent.connect.avro.AvroConverter",
     "value.converter.schema.registry.url": "$SCHEMA_URL",
     "value.converter.schema.registry.ssl.keystore.location": "$KEYSTORE_LOCATION",
-    "value.converter.schema.registry.ssl.keystore.password": "\${secret:jdbcsink:keypassword}",
-    "value.converter.schema.registry.ssl.key.password": "\${secret:jdbcsink:keypassword}",
+    "value.converter.schema.registry.ssl.keystore.password": "$KEYSTORE_SECRET",
+    "value.converter.schema.registry.ssl.key.password": "$KEYSTORE_SECRET",
     "value.converter.schema.registry.ssl.truststore.location": "$TRUSTSTORE_LOCATION",
-    "value.converter.schema.registry.ssl.truststore.password": "\${secret:jdbcsink:keypassword}",
+    "value.converter.schema.registry.ssl.truststore.password": "$KEYSTORE_SECRET",
     "value.converter.schemas.enable": "true",
-    "value.converter.schema.registry.basic.auth.user.info": "\${vault:secret/jdbcsink:cp_username}:\${vault:secret/jdbcsink:cp_password}",
+    "value.converter.schema.registry.basic.auth.user.info": "$USERNAME:$PASSWORD",
     "value.converter.schema.registry.basic.auth.credentials.source": "USER_INFO",
     "consumer.override.group.id": "$GROUP",
     "consumer.override.sasl.mechanism": "$SASL_MECHANISM",
@@ -165,6 +202,7 @@ if [[ $SSL == "true" ]]; then
 EOF
     )
 
+  # Just SSL, No SASL
   else
 
     # create datagen connector

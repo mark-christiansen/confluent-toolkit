@@ -17,6 +17,8 @@ CONNECT_CONFIGS_TOPIC="docker-connect-configs"
 CONNECT_OFFSETS_TOPIC="docker-connect-offsets"
 CONNECT_STATUS_TOPIC="docker-connect-status"
 CONFLUENT_MONITOR_TOPIC="_confluent-monitoring"
+SECRETS_TOPIC="_confluent-secrets"
+SECRETS_GROUP="secret-registry"
 
 # get the kafka cluster ID
 CLUSTER_ID=$(kafka-cluster cluster-id --bootstrap-server $BROKER_URL --config $KAFKA_CONFIG | sed -n "s/^Cluster ID: \(.*\)$/\1/p")
@@ -68,6 +70,15 @@ do
   kafka-acls --bootstrap-server $BROKER_URL --command-config $KAFKA_CONFIG --add --allow-principal "User:${CONNECT_PRINCIPAL}" \
   --allow-host "*" --operation Create --topic "dlq." --resource-pattern-type PREFIXED
   [ $? -eq 1 ] && echo "unable to make create ACL for topic \"dlq.\" and principal \"$CONNECT_PRINCIPAL\"" && exit
+
+  # permissions for secrets registry
+  kafka-acls --bootstrap-server $BROKER_URL --command-config $KAFKA_CONFIG --add --allow-principal "User:${CONNECT_PRINCIPAL}" \
+  --allow-host "*" --operation All --topic $SECRETS_TOPIC
+  [ $? -eq 1 ] && echo "unable to create describe ACL for topic \"$SECRETS_TOPIC\" and principal \"$CONNECT_PRINCIPAL\"" && exit
+
+  kafka-acls --bootstrap-server $BROKER_URL --command-config $KAFKA_CONFIG --add --allow-principal "User:${CONNECT_PRINCIPAL}" \
+  --allow-host "*" --group $SECRETS_GROUP
+  [ $? -eq 1 ] && echo "unable to create read ACL for group \"$SECRETS_GROUP\" and principal \"$CONNECT_PRINCIPAL\"" && exit
 
 done
 

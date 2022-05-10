@@ -7,7 +7,7 @@ cd ${BASE}
 . ../env.sh $1
 [ $? -eq 1 ] && echo "Could not setup environment variables" && exit
 
-KSQL_PRINCIPAL="ksql"
+KSQL_PRINCIPAL="ksql1"
 KSQL_GROUP_PREFIX="_confluent-ksql-ksql-cluster"
 KSQL_TOPIC_PREFIX="_confluent-ksql-ksql-cluster"
 KSQL_PROCCESSING_LOG="ksql-clusterksql_processing_log"
