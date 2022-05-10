@@ -19,16 +19,16 @@ services:
       ZOOKEEPER_SERVERS: zoo1:2888:3888;zoo2:2888:3888;zoo3:2888:3888
       ZOOKEEPER_SERVER_CNXN_FACTORY: org.apache.zookeeper.server.NettyServerCnxnFactory
       ZOOKEEPER_AUTH_PROVIDER_X509: org.apache.zookeeper.server.auth.X509AuthenticationProvider
-      ZOOKEEPER_SSL_KEYSTORE_LOCATION: /var/ssl/private/zoo1.kafka_network.keystore.jks
+      ZOOKEEPER_SSL_KEYSTORE_LOCATION: /var/ssl/private/zoo1.${DOMAIN}.keystore.jks
       ZOOKEEPER_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-      ZOOKEEPER_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/zoo1.kafka_network.truststore.jks
+      ZOOKEEPER_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/zoo1.${DOMAIN}.truststore.jks
       ZOOKEEPER_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       #ZOOKEEPER_SSL_CLIENT_AUTH: need
       #ZOOKEEPER_SSL_CIPHER_SUITES: ${TLS_CIPHER_SUITES}
       ZOOKEEPER_SSL_QUORUM: 'true'
-      ZOOKEEPER_SSL_QUORUM_KEYSTORE_LOCATION: /var/ssl/private/zoo1.kafka_network.keystore.jks
+      ZOOKEEPER_SSL_QUORUM_KEYSTORE_LOCATION: /var/ssl/private/zoo1.${DOMAIN}.keystore.jks
       ZOOKEEPER_SSL_QUORUM_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-      ZOOKEEPER_SSL_QUORUM_TRUSTSTORE_LOCATION: /var/ssl/private/zoo1.kafka_network.truststore.jks
+      ZOOKEEPER_SSL_QUORUM_TRUSTSTORE_LOCATION: /var/ssl/private/zoo1.${DOMAIN}.truststore.jks
       ZOOKEEPER_SSL_QUORUM_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       ZOOKEEPER_SSL_QUORUM_CLIENT_AUTH: need
       #ZOOKEEPER_SSL_QUORUM_CIPHER_SUITES: ${TLS_CIPHER_SUITES}
@@ -42,7 +42,7 @@ services:
     networks:
       - kafka-network
     healthcheck:
-      test: ["CMD", "bash", "-c", "(echo -e ruok | openssl 2>&1 s_client -quiet -connect zoo1:2181 -CAfile /var/ssl/private/intermediate.crt -cert /var/ssl/private/kafka1.kafka_network_cert.pem -key /var/ssl/private/kafka1.kafka_network_key.pem -pass pass:serverpassword) | grep -e imok"]
+      test: ["CMD", "bash", "-c", "(echo -e ruok | openssl 2>&1 s_client -quiet -connect zoo1.${DOMAIN}:2181 -CAfile /var/ssl/private/intermediate.crt -cert /var/ssl/private/kafka1.${DOMAIN}_cert.pem -key /var/ssl/private/kafka1.${DOMAIN}_key.pem -pass pass:serverpassword) | grep -e imok"]
       start_period: 5s
       interval: 20s
       timeout: 10s
@@ -66,17 +66,17 @@ services:
       ZOOKEEPER_SERVERS: zoo1:2888:3888;zoo2:2888:3888;zoo3:2888:3888
       ZOOKEEPER_SERVER_CNXN_FACTORY: org.apache.zookeeper.server.NettyServerCnxnFactory
       ZOOKEEPER_AUTH_PROVIDER_X509: org.apache.zookeeper.server.auth.X509AuthenticationProvider
-      ZOOKEEPER_SSL_KEYSTORE_LOCATION: /var/ssl/private/zoo2.kafka_network.keystore.jks
+      ZOOKEEPER_SSL_KEYSTORE_LOCATION: /var/ssl/private/zoo2.${DOMAIN}.keystore.jks
       ZOOKEEPER_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-      ZOOKEEPER_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/zoo2.kafka_network.truststore.jks
+      ZOOKEEPER_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/zoo2.${DOMAIN}.truststore.jks
       ZOOKEEPER_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       #ZOOKEEPER_SSL_CLIENT_AUTH: need
       ZOOKEEPER_AUTH_PROVIDER_X509: org.apache.zookeeper.server.auth.X509AuthenticationProvider
       #ZOOKEEPER_SSL_CIPHER_SUITES: ${TLS_CIPHER_SUITES}
       ZOOKEEPER_SSL_QUORUM: 'true'
-      ZOOKEEPER_SSL_QUORUM_KEYSTORE_LOCATION: /var/ssl/private/zoo2.kafka_network.keystore.jks
+      ZOOKEEPER_SSL_QUORUM_KEYSTORE_LOCATION: /var/ssl/private/zoo2.${DOMAIN}.keystore.jks
       ZOOKEEPER_SSL_QUORUM_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-      ZOOKEEPER_SSL_QUORUM_TRUSTSTORE_LOCATION: /var/ssl/private/zoo2.kafka_network.truststore.jks
+      ZOOKEEPER_SSL_QUORUM_TRUSTSTORE_LOCATION: /var/ssl/private/zoo2.${DOMAIN}.truststore.jks
       ZOOKEEPER_SSL_QUORUM_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       ZOOKEEPER_SSL_QUORUM_CLIENT_AUTH: need
       #ZOOKEEPER_SSL_QUORUM_CIPHER_SUITES: ${TLS_CIPHER_SUITES}
@@ -90,7 +90,7 @@ services:
     networks:
       - kafka-network
     healthcheck:
-      test: ["CMD", "bash", "-c", "(echo -e ruok | openssl 2>&1 s_client -quiet -connect zoo2:2182 -CAfile /var/ssl/private/intermediate.crt -cert /var/ssl/private/kafka1.kafka_network_cert.pem -key /var/ssl/private/kafka1.kafka_network_key.pem -pass pass:serverpassword) | grep -e imok"]
+      test: ["CMD", "bash", "-c", "(echo -e ruok | openssl 2>&1 s_client -quiet -connect zoo2.${DOMAIN}:2182 -CAfile /var/ssl/private/intermediate.crt -cert /var/ssl/private/kafka1.${DOMAIN}_cert.pem -key /var/ssl/private/kafka1.${DOMAIN}_key.pem -pass pass:serverpassword) | grep -e imok"]
       start_period: 5s
       interval: 20s
       timeout: 10s
@@ -114,16 +114,16 @@ services:
       ZOOKEEPER_SERVERS: zoo1:2888:3888;zoo2:2888:3888;zoo3:2888:3888
       ZOOKEEPER_SERVER_CNXN_FACTORY: org.apache.zookeeper.server.NettyServerCnxnFactory
       ZOOKEEPER_AUTH_PROVIDER_X509: org.apache.zookeeper.server.auth.X509AuthenticationProvider
-      ZOOKEEPER_SSL_KEYSTORE_LOCATION: /var/ssl/private/zoo3.kafka_network.keystore.jks
+      ZOOKEEPER_SSL_KEYSTORE_LOCATION: /var/ssl/private/zoo3.${DOMAIN}.keystore.jks
       ZOOKEEPER_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-      ZOOKEEPER_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/zoo3.kafka_network.truststore.jks
+      ZOOKEEPER_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/zoo3.${DOMAIN}.truststore.jks
       ZOOKEEPER_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       #ZOOKEEPER_SSL_CLIENT_AUTH: need
       #ZOOKEEPER_SSL_CIPHER_SUITES: ${TLS_CIPHER_SUITES}
       ZOOKEEPER_SSL_QUORUM: 'true'
-      ZOOKEEPER_SSL_QUORUM_KEYSTORE_LOCATION: /var/ssl/private/zoo3.kafka_network.keystore.jks
+      ZOOKEEPER_SSL_QUORUM_KEYSTORE_LOCATION: /var/ssl/private/zoo3.${DOMAIN}.keystore.jks
       ZOOKEEPER_SSL_QUORUM_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-      ZOOKEEPER_SSL_QUORUM_TRUSTSTORE_LOCATION: /var/ssl/private/zoo3.kafka_network.truststore.jks
+      ZOOKEEPER_SSL_QUORUM_TRUSTSTORE_LOCATION: /var/ssl/private/zoo3.${DOMAIN}.truststore.jks
       ZOOKEEPER_SSL_QUORUM_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       ZOOKEEPER_SSL_QUORUM_CLIENT_AUTH: need
       #ZOOKEEPER_SSL_QUORUM_CIPHER_SUITES: ${TLS_CIPHER_SUITES}
@@ -137,7 +137,7 @@ services:
     networks:
       - kafka-network
     healthcheck:
-      test: ["CMD", "bash", "-c", "(echo -e ruok | openssl 2>&1 s_client -quiet -connect zoo2:2182 -CAfile /var/ssl/private/intermediate.crt -cert /var/ssl/private/kafka1.kafka_network_cert.pem -key /var/ssl/private/kafka1.kafka_network_key.pem -pass pass:serverpassword) | grep -e imok"]
+      test: ["CMD", "bash", "-c", "(echo -e ruok | openssl 2>&1 s_client -quiet -connect zoo3.${DOMAIN}:2182 -CAfile /var/ssl/private/intermediate.crt -cert /var/ssl/private/kafka1.${DOMAIN}_cert.pem -key /var/ssl/private/kafka1.${DOMAIN}_key.pem -pass pass:serverpassword) | grep -e imok"]
       start_period: 5s
       interval: 20s
       timeout: 10s
@@ -168,9 +168,9 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zoo1:2181,zoo2:2182,zoo3:2183
       KAFKA_ZOOKEEPER_CLIENT_CNXN_SOCKET: org.apache.zookeeper.ClientCnxnSocketNetty
       KAFKA_ZOOKEEPER_SSL_CLIENT_ENABLE: 'true'
-      KAFKA_ZOOKEEPER_SSL_KEYSTORE_LOCATION: /var/ssl/private/kafka1.kafka_network.keystore.jks
+      KAFKA_ZOOKEEPER_SSL_KEYSTORE_LOCATION: /var/ssl/private/kafka1.${DOMAIN}.keystore.jks
       KAFKA_ZOOKEEPER_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-      KAFKA_ZOOKEEPER_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/kafka1.kafka_network.truststore.jks
+      KAFKA_ZOOKEEPER_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/kafka1.${DOMAIN}.truststore.jks
       KAFKA_ZOOKEEPER_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       #KAFKA_ZOOKEEPER_SSL_CIPHER_SUITES: ${TLS_CIPHER_SUITES}
       # listeners
@@ -180,9 +180,9 @@ services:
       KAFKA_LISTENERS: INTERNAL://kafka1:29093,EXTERNAL://kafka1:9093
       # encryption
       KAFKA_SECURITY_PROTOCOL: SSL
-      KAFKA_SSL_KEYSTORE_LOCATION: /var/ssl/private/kafka1.kafka_network.keystore.jks
+      KAFKA_SSL_KEYSTORE_LOCATION: /var/ssl/private/kafka1.${DOMAIN}.keystore.jks
       KAFKA_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-      KAFKA_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/kafka1.kafka_network.truststore.jks
+      KAFKA_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/kafka1.${DOMAIN}.truststore.jks
       KAFKA_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       KAFKA_SSL_CLIENT_AUTH: 'required'
       # authorization
@@ -200,9 +200,9 @@ services:
       CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 3
       CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: kafka1:29093,kafka2:29094,kafka3:29095
       CONFLUENT_METRICS_REPORTER_SECURITY_PROTOCOL: SSL
-      CONFLUENT_METRICS_REPORTER_SSL_KEYSTORE_LOCATION: /var/ssl/private/kafka1.kafka_network.keystore.jks
+      CONFLUENT_METRICS_REPORTER_SSL_KEYSTORE_LOCATION: /var/ssl/private/kafka1.${DOMAIN}.keystore.jks
       CONFLUENT_METRICS_REPORTER_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-      CONFLUENT_METRICS_REPORTER_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/kafka1.kafka_network.truststore.jks
+      CONFLUENT_METRICS_REPORTER_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/kafka1.${DOMAIN}.truststore.jks
       CONFLUENT_METRICS_REPORTER_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       # logging
       KAFKA_LOG4J_ROOT_LOGLEVEL: INFO
@@ -218,7 +218,7 @@ services:
     networks:
       - kafka-network
     healthcheck:
-      test: ["CMD", "bash", "-c", "kafka-cluster cluster-id --bootstrap-server kafka1:29093 --config /etc/kafka/kafka.properties | grep -e 'Cluster ID: .*'"]
+      test: ["CMD", "bash", "-c", "kafka-cluster cluster-id --bootstrap-server kafka1.${DOMAIN}:29093 --config /etc/kafka/kafka.properties | grep -e 'Cluster ID: .*'"]
       start_period: 30s
       interval: 10s
       timeout: 10s
@@ -249,9 +249,9 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zoo1:2181,zoo2:2182,zoo3:2183
       KAFKA_ZOOKEEPER_CLIENT_CNXN_SOCKET: org.apache.zookeeper.ClientCnxnSocketNetty
       KAFKA_ZOOKEEPER_SSL_CLIENT_ENABLE: 'true'
-      KAFKA_ZOOKEEPER_SSL_KEYSTORE_LOCATION: /var/ssl/private/kafka2.kafka_network.keystore.jks
+      KAFKA_ZOOKEEPER_SSL_KEYSTORE_LOCATION: /var/ssl/private/kafka2.${DOMAIN}.keystore.jks
       KAFKA_ZOOKEEPER_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-      KAFKA_ZOOKEEPER_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/kafka2.kafka_network.truststore.jks
+      KAFKA_ZOOKEEPER_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/kafka2.${DOMAIN}.truststore.jks
       KAFKA_ZOOKEEPER_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       #KAFKA_ZOOKEEPER_SSL_CIPHER_SUITES: ${TLS_CIPHER_SUITES}
       # listeners
@@ -261,9 +261,9 @@ services:
       KAFKA_LISTENERS: INTERNAL://kafka2:29094,EXTERNAL://kafka2:9094
       # encryption
       KAFKA_SECURITY_PROTOCOL: SSL
-      KAFKA_SSL_KEYSTORE_LOCATION: /var/ssl/private/kafka2.kafka_network.keystore.jks
+      KAFKA_SSL_KEYSTORE_LOCATION: /var/ssl/private/kafka2.${DOMAIN}.keystore.jks
       KAFKA_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-      KAFKA_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/kafka2.kafka_network.truststore.jks
+      KAFKA_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/kafka2.${DOMAIN}.truststore.jks
       KAFKA_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       KAFKA_SSL_CLIENT_AUTH: 'required'
       # authorization
@@ -281,9 +281,9 @@ services:
       CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 3
       CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: kafka1:29093,kafka2:29094,kafka3:29095
       CONFLUENT_METRICS_REPORTER_SECURITY_PROTOCOL: SSL
-      CONFLUENT_METRICS_REPORTER_SSL_KEYSTORE_LOCATION: /var/ssl/private/kafka1.kafka_network.keystore.jks
+      CONFLUENT_METRICS_REPORTER_SSL_KEYSTORE_LOCATION: /var/ssl/private/kafka1.${DOMAIN}.keystore.jks
       CONFLUENT_METRICS_REPORTER_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-      CONFLUENT_METRICS_REPORTER_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/kafka1.kafka_network.truststore.jks
+      CONFLUENT_METRICS_REPORTER_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/kafka1.${DOMAIN}.truststore.jks
       CONFLUENT_METRICS_REPORTER_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       # logging
       KAFKA_LOG4J_ROOT_LOGLEVEL: INFO
@@ -299,7 +299,7 @@ services:
     networks:
       - kafka-network
     healthcheck:
-      test: ["CMD", "bash", "-c", "kafka-cluster cluster-id --bootstrap-server kafka2:29094 --config /etc/kafka/kafka.properties | grep -e 'Cluster ID: .*'"]
+      test: ["CMD", "bash", "-c", "kafka-cluster cluster-id --bootstrap-server kafka2.${DOMAIN}:29094 --config /etc/kafka/kafka.properties | grep -e 'Cluster ID: .*'"]
       start_period: 30s
       interval: 10s
       timeout: 10s
@@ -330,9 +330,9 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zoo1:2181,zoo2:2182,zoo3:2183
       KAFKA_ZOOKEEPER_CLIENT_CNXN_SOCKET: org.apache.zookeeper.ClientCnxnSocketNetty
       KAFKA_ZOOKEEPER_SSL_CLIENT_ENABLE: 'true'
-      KAFKA_ZOOKEEPER_SSL_KEYSTORE_LOCATION: /var/ssl/private/kafka3.kafka_network.keystore.jks
+      KAFKA_ZOOKEEPER_SSL_KEYSTORE_LOCATION: /var/ssl/private/kafka3.${DOMAIN}.keystore.jks
       KAFKA_ZOOKEEPER_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-      KAFKA_ZOOKEEPER_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/kafka3.kafka_network.truststore.jks
+      KAFKA_ZOOKEEPER_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/kafka3.${DOMAIN}.truststore.jks
       KAFKA_ZOOKEEPER_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       #KAFKA_ZOOKEEPER_SSL_CIPHER_SUITES: ${TLS_CIPHER_SUITES}
       # listeners
@@ -342,16 +342,16 @@ services:
       KAFKA_LISTENERS: INTERNAL://kafka3:29095,EXTERNAL://kafka3:9095
       # encryption
       KAFKA_SECURITY_PROTOCOL: SSL
-      KAFKA_SSL_KEYSTORE_LOCATION: /var/ssl/private/kafka3.kafka_network.keystore.jks
+      KAFKA_SSL_KEYSTORE_LOCATION: /var/ssl/private/kafka3.${DOMAIN}.keystore.jks
       KAFKA_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-      KAFKA_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/kafka3.kafka_network.truststore.jks
+      KAFKA_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/kafka3.${DOMAIN}.truststore.jks
       KAFKA_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       KAFKA_SSL_CLIENT_AUTH: 'required'
       # authorization
       KAFKA_AUTHORIZER_CLASS_NAME: kafka.security.authorizer.AclAuthorizer
       KAFKA_SUPER_USERS: "User:kafka1;User:kafka2;User:kafka3"
       KAFKA_SSL_PRINCIPAL_MAPPING_RULES: RULE:^CN=([a-zA-Z0-9]*).*$$/$$1/L,DEFAULT
-      #KAFKA_SUPER_USERS: "User:CN=kafka1.kafka_network,OU=IT,O=IDS,L=MINNEAPOLIS,ST=MN,C=US;User:CN=kafka2.kafka_network,OU=IT,O=IDS,L=MINNEAPOLIS,ST=MN,C=US;User:CN=kafka3.kafka_network,OU=IT,O=IDS,L=MINNEAPOLIS,ST=MN,C=US"
+      #KAFKA_SUPER_USERS: "User:CN=kafka1.${DOMAIN},OU=IT,O=IDS,L=MINNEAPOLIS,ST=MN,C=US;User:CN=kafka2.${DOMAIN},OU=IT,O=IDS,L=MINNEAPOLIS,ST=MN,C=US;User:CN=kafka3.${DOMAIN},OU=IT,O=IDS,L=MINNEAPOLIS,ST=MN,C=US"
       #KAFKA_SSL_CIPHER_SUITES: ${TLS_CIPHER_SUITES}
       KAFKA_CONFLUENT_BALANCER_ENABLE: 'true'
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
@@ -363,9 +363,9 @@ services:
       CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 3
       CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: kafka1:29093,kafka2:29094,kafka3:29095
       CONFLUENT_METRICS_REPORTER_SECURITY_PROTOCOL: SSL
-      CONFLUENT_METRICS_REPORTER_SSL_KEYSTORE_LOCATION: /var/ssl/private/kafka1.kafka_network.keystore.jks
+      CONFLUENT_METRICS_REPORTER_SSL_KEYSTORE_LOCATION: /var/ssl/private/kafka1.${DOMAIN}.keystore.jks
       CONFLUENT_METRICS_REPORTER_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-      CONFLUENT_METRICS_REPORTER_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/kafka1.kafka_network.truststore.jks
+      CONFLUENT_METRICS_REPORTER_SSL_TRUSTSTORE_LOCATION: /var/ssl/private/kafka1.${DOMAIN}.truststore.jks
       CONFLUENT_METRICS_REPORTER_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       # logging
       KAFKA_LOG4J_ROOT_LOGLEVEL: INFO
@@ -381,7 +381,7 @@ services:
     networks:
       - kafka-network
     healthcheck:
-      test: ["CMD", "bash", "-c", "kafka-cluster cluster-id --bootstrap-server kafka3:29095 --config /etc/kafka/kafka.properties | grep -e 'Cluster ID: .*'"]
+      test: ["CMD", "bash", "-c", "kafka-cluster cluster-id --bootstrap-server kafka3.${DOMAIN}:29095 --config /etc/kafka/kafka.properties | grep -e 'Cluster ID: .*'"]
       start_period: 30s
       interval: 10s
       timeout: 10s
@@ -412,6 +412,7 @@ services:
 
   client:
     image: kafka-client:0.0.1
+    build: ./client
     hostname: client
     container_name: client
     links:
@@ -463,20 +464,20 @@ services:
       # kafka store
       SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'SSL://lb:29092'
       SCHEMA_REGISTRY_KAFKASTORE_SECURITY_PROTOCOL: 'SSL'
-      SCHEMA_REGISTRY_KAFKASTORE_SSL_KEYSTORE_LOCATION: '/var/ssl/private/schema1.kafka_network.keystore.jks'
+      SCHEMA_REGISTRY_KAFKASTORE_SSL_KEYSTORE_LOCATION: '/var/ssl/private/schema1.${DOMAIN}.keystore.jks'
       SCHEMA_REGISTRY_KAFKASTORE_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       SCHEMA_REGISTRY_KAFKASTORE_SSL_KEY_PASSWORD: ${KEYSTORE_PASSWORD}
-      SCHEMA_REGISTRY_KAFKASTORE_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/schema1.kafka_network.truststore.jks'
+      SCHEMA_REGISTRY_KAFKASTORE_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/schema1.${DOMAIN}.truststore.jks'
       SCHEMA_REGISTRY_KAFKASTORE_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       SCHEMA_REGISTRY_KAFKASTORE_TOPIC: '_schemas'
       SCHEMA_REGISTRY_KAFKASTORE_ZK_SESSION_TIMEOUT_MS: 60000
       SCHEMA_REGISTRY_KAFKASTORE_TIMEOUT_MS: 10000
       SCHEMA_REGISTRY_KAFKASTORE_INIT_TIMEOUT_MS: 120000
       # encryption
-      SCHEMA_REGISTRY_SSL_KEYSTORE_LOCATION: '/var/ssl/private/schema1.kafka_network.keystore.jks'
+      SCHEMA_REGISTRY_SSL_KEYSTORE_LOCATION: '/var/ssl/private/schema1.${DOMAIN}.keystore.jks'
       SCHEMA_REGISTRY_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       SCHEMA_REGISTRY_SSL_KEY_PASSWORD: ${KEYSTORE_PASSWORD}
-      SCHEMA_REGISTRY_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/schema1.kafka_network.truststore.jks'
+      SCHEMA_REGISTRY_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/schema1.${DOMAIN}.truststore.jks'
       SCHEMA_REGISTRY_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       # communication between schema registry servers
       SCHEMA_REGISTRY_INTER_INSTANCE_PROTOCOL: 'https'
@@ -518,10 +519,10 @@ services:
     environment:
       CONNECT_BOOTSTRAP_SERVERS: 'SSL://lb:29092'
       CONNECT_SECURITY_PROTOCOL: 'SSL'
-      CONNECT_SSL_KEYSTORE_LOCATION: '/var/ssl/private/connect1.kafka_network.keystore.jks'
+      CONNECT_SSL_KEYSTORE_LOCATION: '/var/ssl/private/connect1.${DOMAIN}.keystore.jks'
       CONNECT_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       CONNECT_SSL_KEY_PASSWORD: ${KEYSTORE_PASSWORD}
-      CONNECT_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/connect1.kafka_network.truststore.jks'
+      CONNECT_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/connect1.${DOMAIN}.truststore.jks'
       CONNECT_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       CONNECT_REST_ADVERTISED_HOST_NAME: connect1
       CONNECT_REST_PORT: 8083
@@ -535,18 +536,18 @@ services:
       CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 3
       CONNECT_KEY_CONVERTER: io.confluent.connect.avro.AvroConverter
       CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: https://schema1:8081
-      CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_SSL_KEYSTORE_LOCATION: '/var/ssl/private/connect1.kafka_network.keystore.jks'
+      CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_SSL_KEYSTORE_LOCATION: '/var/ssl/private/connect1.${DOMAIN}.keystore.jks'
       CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_SSL_KEY_PASSWORD: ${KEYSTORE_PASSWORD}
-      CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/connect1.kafka_network.truststore.jks'
+      CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/connect1.${DOMAIN}.truststore.jks'
       CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       CONNECT_KEY_SUBJECT_NAME_STRATEGY: io.confluent.kafka.serializers.subject.RecordNameStrategy
       CONNECT_VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter
       CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: https://schema1:8081
-      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_SSL_KEYSTORE_LOCATION: '/var/ssl/private/connect1.kafka_network.keystore.jks'
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_SSL_KEYSTORE_LOCATION: '/var/ssl/private/connect1.${DOMAIN}.keystore.jks'
       CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_SSL_KEY_PASSWORD: ${KEYSTORE_PASSWORD}
-      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/connect1.kafka_network.truststore.jks'
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/connect1.${DOMAIN}.truststore.jks'
       CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       CONNECT_VALUE_SUBJECT_NAME_STRATEGY: io.confluent.kafka.serializers.subject.RecordNameStrategy
       CONNECT_INTERNAL_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
@@ -585,30 +586,30 @@ services:
 #      - "9021:9021"
 #    environment:
 #      CONTROL_CENTER_BOOTSTRAP_SERVERS: 'SSL://lb:29092'
-#      CONTROL_CENTER_SSL_KEYSTORE_LOCATION: '/var/ssl/private/c3.kafka_network.keystore.jks'
+#      CONTROL_CENTER_SSL_KEYSTORE_LOCATION: '/var/ssl/private/c3.${DOMAIN}.keystore.jks'
 #      CONTROL_CENTER_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
 #      CONTROL_CENTER_SSL_KEY_PASSWORD: ${KEYSTORE_PASSWORD}
-#      CONTROL_CENTER_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/c3.kafka_network.truststore.jks'
+#      CONTROL_CENTER_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/c3.${DOMAIN}.truststore.jks'
 #      CONTROL_CENTER_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
 #      # schema registry
 #      CONTROL_CENTER_SCHEMA_REGISTRY_SCHEMA1_URL: "https://schema1:8081"
-#      CONTROL_CENTER_SCHEMA_REGISTRY_SCHEMA1_SSL_KEYSTORE_LOCATION: '/var/ssl/private/c3.kafka_network.keystore.jks'
+#      CONTROL_CENTER_SCHEMA_REGISTRY_SCHEMA1_SSL_KEYSTORE_LOCATION: '/var/ssl/private/c3.${DOMAIN}.keystore.jks'
 #      CONTROL_CENTER_SCHEMA_REGISTRY_SCHEMA1_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
 #      CONTROL_CENTER_SCHEMA_REGISTRY_SCHEMA1_SSL_KEY_PASSWORD: ${KEYSTORE_PASSWORD}
-#      CONTROL_CENTER_SCHEMA_REGISTRY_SCHEMA1_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/c3.kafka_network.truststore.jks'
+#      CONTROL_CENTER_SCHEMA_REGISTRY_SCHEMA1_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/c3.${DOMAIN}.truststore.jks'
 #      CONTROL_CENTER_SCHEMA_REGISTRY_SCHEMA1_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
 #      # streams
 #      CONTROL_CENTER_STREAMS_SECURITY_PROTOCOL: 'SSL'
-#      CONTROL_CENTER_STREAMS_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/c3.kafka_network.truststore.jks'
+#      CONTROL_CENTER_STREAMS_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/c3.${DOMAIN}.truststore.jks'
 #      CONTROL_CENTER_STREAMS_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-#      CONTROL_CENTER_STREAMS_SSL_KEYSTORE_LOCATION: '/var/ssl/private/c3.kafka_network.keystore.jks'
+#      CONTROL_CENTER_STREAMS_SSL_KEYSTORE_LOCATION: '/var/ssl/private/c3.${DOMAIN}.keystore.jks'
 #      CONTROL_CENTER_STREAMS_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
 #      CONTROL_CENTER_STREAMS_SSL_KEY_PASSWORD: ${KEYSTORE_PASSWORD}
 #      # reset
 #      CONTROL_CENTER_REST_LISTENERS: https://0.0.0.0:9021
-#      CONTROL_CENTER_REST_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/c3.kafka_network.truststore.jks'
+#      CONTROL_CENTER_REST_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/c3.${DOMAIN}.truststore.jks'
 #      CONTROL_CENTER_REST_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-#      CONTROL_CENTER_REST_SSL_KEYSTORE_LOCATION: '/var/ssl/private/c3.kafka_network.keystore.jks'
+#      CONTROL_CENTER_REST_SSL_KEYSTORE_LOCATION: '/var/ssl/private/c3.${DOMAIN}.keystore.jks'
 #      CONTROL_CENTER_REST_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
 #      CONTROL_CENTER_REST_SSL_KEY_PASSWORD: ${KEYSTORE_PASSWORD}
 #      # connect
@@ -642,4 +643,4 @@ services:
 
 networks:
   kafka-network:
-    name: kafka_network
+    name: ${DOMAIN}

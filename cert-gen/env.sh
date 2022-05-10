@@ -3,7 +3,7 @@
 # set the env (CA) and region (intermediate CA) domains
 CA_DOMAIN="mycompany.com"
 INT_DOMAIN="region.${CA_DOMAIN}"
-PRIVATE_DOMAIN="kafka_network"
+PRIVATE_DOMAIN="mycompany.com"
 
 # certificate needed, brokers certificate should be based on hostname of the cerificate
 #declare -a MACHINES=("ip-10-150-1-51.${PRIVATE_DOMAIN}" "ip-10-150-1-48.${PRIVATE_DOMAIN}" "ip-10-150-1-54.${PRIVATE_DOMAIN}" "ip-10-150-1-58.${PRIVATE_DOMAIN}" "ip-10-150-1-36.${PRIVATE_DOMAIN}" "broker-0.${INT_DOMAIN}" "broker-1.${INT_DOMAIN}" "broker-2.${INT_DOMAIN}" "broker-3.${INT_DOMAIN}" "broker-4.${INT_DOMAIN}" "schema-0.${INT_DOMAIN}" "schema-1.${INT_DOMAIN}" "ip-10-150-2-40.${PRIVATE_DOMAIN}" "ip-10-150-2-44.${PRIVATE_DOMAIN}" "ip-10-150-2-48.${PRIVATE_DOMAIN}" "ip-10-150-1-56.${PRIVATE_DOMAIN}")

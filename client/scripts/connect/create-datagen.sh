@@ -8,7 +8,7 @@ cd ${BASE}
 # create input topic for datagen connector
 TOPIC="env.app.person"
 echo "Creating datagen connector topic \"$TOPIC\""
-kafka-topics --bootstrap-server $BROKER_URL --command-config $KAFKA_CONFIG --create --topic $TOPIC --partitions 5
+kafka-topics --bootstrap-server $BROKER_URL --command-config $KAFKA_CONFIG --create --topic $TOPIC --partitions 5 --replication-factor 3
 echo "Created datagen connector topic \"$TOPIC\""
 
 PRINCIPAL="datagen"
@@ -51,17 +51,20 @@ echo "Connect server $KAFKA_CONNECT_URL is ready to accept requests"
 
 if [[ $SSL == "true" ]]; then
 
-  KEYSTORE_LOCATION="$KEYSTORE_DIR/$PRINCIPAL.kafka_network.keystore.jks"
-  TRUSTSTORE_LOCATION="$KEYSTORE_DIR/$PRINCIPAL.kafka_network.truststore.jks"
+  KEYSTORE_LOCATION="$KEYSTORE_DIR/$PRINCIPAL.$DOMAIN.keystore.jks"
+  TRUSTSTORE_LOCATION="$KEYSTORE_DIR/$PRINCIPAL.$DOMAIN.truststore.jks"
   PASSWORD="datagen-secret"
 
   if [[ $SASL == "true" ]]; then
 
     SASL_MECHANISM="PLAIN"
-    SASL_MODULE="org.apache.kafka.common.security.plain.PlainLoginModule"
+    JAAS_CONFIG="org.apache.kafka.common.security.plain.PlainLoginModule required username=\\\"\${vault:secret/datagen:cp_username}\\\" password=\\\"\${vault:secret/datagen:cp_password}\\\";"
     if [[ $ENV == "scram" ]]; then
       SASL_MECHANISM="SCRAM-SHA-512"
-      SASL_MODULE="org.apache.kafka.common.security.scram.ScramLoginModule"
+      JAAS_CONFIG="org.apache.kafka.common.security.scram.ScramLoginModule required username=\\\"\${vault:secret/datagen:cp_username}\\\" password=\\\"\${vault:secret/datagen:cp_password}\\\";"
+    elif [[ $ENV == "gssapi" ]]; then
+      SASL_MECHANISM="GSSAPI"
+      JAAS_CONFIG="com.sun.security.auth.module.Krb5LoginModule required useKeyTab=true storeKey=true keyTab=\\\"/etc/security/keytabs/connect.keytab\\\" principal=\\\"\${vault:secret/datagen:cp_username}@MYCOMPANY.COM\\\";"
     fi
 
     echo "Creating datagen connector secrets"
@@ -109,16 +112,10 @@ if [[ $SSL == "true" ]]; then
     "value.converter.schema.registry.basic.auth.user.info": "\${secret:datagen:username}:\${secret:datagen:password}",
     "value.converter.schema.registry.basic.auth.credentials.source": "USER_INFO",
     "max.interval": "1000",
-    "iterations": "5000",
+    "iterations": "100000",
     "producer.override.client.id": "$PRINCIPAL-producer",
-    "producer.override.security.protocol": "SASL_SSL",
-    "producer.override.ssl.keystore.location": "$KEYSTORE_LOCATION",
-    "producer.override.ssl.keystore.password": "\${secret:datagen:keypassword}",
-    "producer.override.ssl.key.password": "\${secret:datagen:keypassword}",
-    "producer.override.ssl.truststore.location": "$TRUSTSTORE_LOCATION",
-    "producer.override.ssl.truststore.password": "\${secret:datagen:keypassword}",
     "producer.override.sasl.mechanism": "$SASL_MECHANISM",
-    "producer.override.sasl.jaas.config": "$SASL_MODULE required username=\"\${vault:secret/datagen:cp_username}\" password=\"\${vault:secret/datagen:cp_password}\";"
+    "producer.override.sasl.jaas.config": "$JAAS_CONFIG"
   }
 }
 EOF
@@ -186,6 +183,10 @@ EOF
     )
 
 fi
+
+echo ""
+echo $POST_DATA
+echo ""
 
 echo ""
 echo "Creating datagen connector"

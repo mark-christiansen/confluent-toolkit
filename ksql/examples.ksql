@@ -9,15 +9,21 @@ CREATE STREAM origin_stream (lastName string key, countryOfOrigin string) WITH (
 INSERT INTO origin_stream(lastName, countryOfOrigin) VALUES ('Van Halen', 'Netherlands');
 INSERT INTO origin_stream(lastName, countryOfOrigin) VALUES ('Wolfeschlegelsteinhausenbergerdorff', 'Germany');
 INSERT INTO origin_stream(lastName, countryOfOrigin) VALUES ('Osbourne', 'England');
+INSERT INTO origin_stream(lastName, countryOfOrigin) VALUES ('Hogan', 'United States');
+INSERT INTO origin_stream(lastName, countryOfOrigin) VALUES ('Cuomo', 'Italy');
 
 CREATE TABLE person_view (id bigint PRIMARY KEY, firstName varchar, lastName varchar, age int, birthDate date, money decimal(12,2), created timestamp, updated timestamp ) WITH (KAFKA_TOPIC='env.app.person', VALUE_FORMAT='AVRO');
 CREATE TABLE origin_view (lastName string PRIMARY KEY) WITH (KAFKA_TOPIC='env.app.origin', PARTITIONS=5, VALUE_FORMAT='AVRO');
 
+# join the person_view to origin_view with a foreign key join
 CREATE TABLE person_origin_view WITH (KAFKA_TOPIC='env.ksql.person-origin', VALUE_FORMAT='AVRO', PARTITIONS='5') AS
   SELECT p.id, p.firstName, p.lastName, p.age, p.birthDate, p.money, p.created, p.updated, o.countryOfOrigin
   FROM person_view p
     LEFT JOIN origin_view o ON p.lastName = o.lastName
   EMIT CHANGES;
+
+# show results
+SELECT * FROM person_origin_view EMIT CHANGES;
 
 # KSQL: Count Table
 

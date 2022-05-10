@@ -771,6 +771,7 @@ services:
 
   client:
     image: kafka-client:0.0.1
+    build: ./client
     hostname: client
     container_name: client
     command:

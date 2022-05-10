@@ -1,7 +1,9 @@
 #!/bin/bash
 
+START=$SECONDS
+
 # env from user input
-ENVS=("mtls-acl" "sasl-rbac" "scram-rbac")
+ENVS=("mtls-acl" "sasl-rbac" "scram-rbac" "gssapi-acl" "gssapi-rbac")
 [[ -z "$1" ]] && { echo "Environment (${ENVS[@]}) not specified" ; exit 1; }
 [[ ! " ${ENVS[@]} " =~ " $1 " ]] && { echo "Invalid environment $1 specified. Valid envs are (${ENVS[@]})." ; exit 1; }
 ENV=$1
@@ -50,6 +52,15 @@ elif [[ $ENV == "scram-rbac" ]]; then
   ROLE="scram"
 elif [[ $ENV == "mtls-acl" ]]; then
   ROLE="mtls"
+elif [[ $ENV == "gssapi-acl" ]]; then
+  ROLE="gssapi"
+elif [[ $ENV == "gssapi-rbac" ]]; then
+  ROLE="gssapi"
+else 
+  DURATION=$(( SECONDS - START ))
+  echo ""
+  echo "Finished setup of environment $ENV in $DURATION secs"
+  exit 0
 fi
 
 # create datagen connector
@@ -67,3 +78,8 @@ echo "Creating jdbc-sink connector"
 echo "******************************************************************"
 echo ""
 docker exec -it client /bin/bash -c "cd /scripts/connect && ./create-jdbc-sink.sh $ROLE"
+
+DURATION=$(( SECONDS - START ))
+echo ""
+echo "Finished setup of environment $ENV in $DURATION secs"
+exit 0

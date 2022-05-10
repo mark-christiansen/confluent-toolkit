@@ -58,8 +58,8 @@ echo "Connect server REST API is ready to accept requests"
 
 if [[ $SSL == "true" ]]; then
 
-  KEYSTORE_LOCATION="$KEYSTORE_DIR/$PRINCIPAL.kafka_network.keystore.jks"
-  TRUSTSTORE_LOCATION="$KEYSTORE_DIR/$PRINCIPAL.kafka_network.truststore.jks"
+  KEYSTORE_LOCATION="$KEYSTORE_DIR/$PRINCIPAL.$DOMAIN.keystore.jks"
+  TRUSTSTORE_LOCATION="$KEYSTORE_DIR/$PRINCIPAL.$DOMAIN.truststore.jks"
   PASSWORD="jdbcsink-secret"
   DB_USERNAME="postgres"
   DB_PASSWORD="postgrespass"
@@ -67,10 +67,13 @@ if [[ $SSL == "true" ]]; then
   if [[ $SASL == "true" ]]; then
 
     SASL_MECHANISM="PLAIN"
-    SASL_MODULE="org.apache.kafka.common.security.plain.PlainLoginModule"
+    JAAS_CONFIG="org.apache.kafka.common.security.plain.PlainLoginModule required username=\\\"\${vault:secret/jdbcsink:cp_username}\\\" password=\\\"\${vault:secret/jdbcsink:cp_password}\\\";"
     if [[ $ENV == "scram" ]]; then
       SASL_MECHANISM="SCRAM-SHA-512"
-      SASL_MODULE="org.apache.kafka.common.security.scram.ScramLoginModule"
+      JAAS_CONFIG="org.apache.kafka.common.security.scram.ScramLoginModule required username=\\\"\${vault:secret/jdbcsink:cp_username}\\\" password=\\\"\${vault:secret/jdbcsink:cp_password}\\\";"
+    elif [[ $ENV == "gssapi" ]]; then
+      SASL_MECHANISM="GSSAPI"
+      JAAS_CONFIG="com.sun.security.auth.module.Krb5LoginModule required useKeyTab=true storeKey=true keyTab=\\\"/etc/security/keytabs/connect.keytab\\\" principal=\\\"\${vault:secret/jdbcsink:cp_username}@MYCOMPANY.COM\\\";"
     fi
 
     echo "Creating jdbcsink connector secrets"
@@ -149,20 +152,10 @@ if [[ $SSL == "true" ]]; then
     "value.converter.schema.registry.basic.auth.credentials.source": "USER_INFO",
     "consumer.override.group.id": "$GROUP",
     "consumer.override.sasl.mechanism": "$SASL_MECHANISM",
-    "consumer.override.sasl.jaas.config": "$SASL_MODULE required username=\"\${vault:secret/jdbcsink:cp_username}\" password=\"\${vault:secret/jdbcsink:cp_password}\";",
-    "consumer.override.ssl.keystore.location": "$KEYSTORE_LOCATION",
-    "consumer.override.ssl.keystore.password": "\${secret:jdbcsink:keypassword}",
-    "consumer.override.ssl.key.password": "\${secret:jdbcsink:keypassword}",
-    "consumer.override.ssl.truststore.location": "$TRUSTSTORE_LOCATION",
-    "consumer.override.ssl.truststore.password": "\${secret:jdbcsink:keypassword}",
+    "consumer.override.sasl.jaas.config": "$JAAS_CONFIG",
     "producer.override.client.id": "jdbcsink-producer",
     "producer.override.sasl.mechanism": "$SASL_MECHANISM",
-    "producer.override.sasl.jaas.config": "$SASL_MODULE required username=\"\${vault:secret/jdbcsink:cp_username}\" password=\"\${vault:secret/jdbcsink:cp_password}\";",
-    "producer.override.ssl.keystore.location": "$KEYSTORE_LOCATION",
-    "producer.override.ssl.keystore.password": "\${secret:jdbcsink:keypassword}",
-    "producer.override.ssl.key.password": "\${secret:jdbcsink:keypassword}",
-    "producer.override.ssl.truststore.location": "$TRUSTSTORE_LOCATION",
-    "producer.override.ssl.truststore.password": "\${secret:jdbcsink:keypassword}",
+    "producer.override.sasl.jaas.config": "$JAAS_CONFIG",
     "transforms":"dropPrefix",
     "transforms.dropPrefix.type":"org.apache.kafka.connect.transforms.RegexRouter",
     "transforms.dropPrefix.regex":"env\\\\.app\\\\.(.*)",

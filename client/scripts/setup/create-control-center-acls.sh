@@ -7,61 +7,35 @@ cd ${BASE}
 . ../env.sh $1
 [ $? -eq 1 ] && echo "Could not setup environment variables" && exit
 
-C3_PRINCIPALS=("c3")
-C3_GROUP="_confluent-controlcenter-"
-C3_TOPIC="_confluent-controlcenter-"
-BALANCER_TOPIC="_confluent_balancer_"
+PRINCIPALS=("c3")
+INTERMEDIATE_TOPICS=(Group-FIFTEEN_SECONDS-changelog Group-ONE_HOUR-changelog Group-ONE_WEEK-changelog MonitoringMessageAggregatorWindows-FIFTEEN_SECONDS-changelog MonitoringMessageAggregatorWindows-ONE_HOUR-changelog MonitoringMessageAggregatorWindows-ONE_WEEK-changelog MonitoringStream-FIFTEEN_SECONDS-changelog MonitoringStream-ONE_HOUR-changelog MonitoringStream-ONE_WEEK-changelog MonitoringVerifierStore-changelog aggregate-topic-partition aggregate-topic-partition-changelog aggregatedTopicPartitionTableWindows-FIFTEEN_SECONDS-changelog aggregatedTopicPartitionTableWindows-ONE_HOUR-changelog aggregatedTopicPartitionTableWindows-ONE_WEEK-changelog error-topic group-aggregate-topic-FIFTEEN_SECONDS group-aggregate-topic-FIFTEEN_SECONDS-changelog group-aggregate-topic-ONE_HOUR group-aggregate-topic-ONE_HOUR-changelog group-aggregate-topic-ONE_WEEK group-aggregate-topic-ONE_WEEK-changelog group-stream-extension-rekey group-stream-extension-rekey-changelog monitoring-aggregate-rekey monitoring-aggregate-rekey-changelog monitoring-message-rekey)
+ZK_CONNECT="$ZOO1_URL,$ZOO2_URL,$ZOO3_URL"
+CONTROL_CENTER_NAME="_confluent-controlcenter"
+CONTROL_CENTER_ID="7-0-1-1"
 LICENSE_TOPIC="_confluent-command"
-METRICS_TOPIC="_confluent-metrics"
+MONITORING_TOPIC="_confluent-monitoring"
+APP_ID="$CONTROL_CENTER_NAME-$CONTROL_CENTER_ID"
 
-# get the kafka cluster ID
-CLUSTER_ID=$(kafka-cluster cluster-id --bootstrap-server $BROKER_URL --config $KAFKA_CONFIG | sed -n "s/^Cluster ID: \(.*\)$/\1/p")
-[[ -z "$CLUSTER_ID" ]] && { echo "Kafka cluster ID could not be found" ; exit 1; }
-echo "Retrieved Kafka cluster ID: $CLUSTER_ID"
-
-for C3_PRINCIPAL in "${C3_PRINCIPALS[@]}"
+for PRINCIPAL in "${PRINCIPALS[@]}"
 do
+
+  for topic_suffix in "${INTERMEDIATE_TOPICS[@]}"
+  do
+    topic="$APP_ID-$topic_suffix"
+    echo "Setting acls for topic $topic"
+    kafka-acls --bootstrap-server $BROKER_URL --command-config $KAFKA_CONFIG --add --allow-principal "User:$PRINCIPAL" --producer --topic "$topic" #> /dev/null 2>&1 || echo "Failed"
+    kafka-acls --bootstrap-server $BROKER_URL --command-config $KAFKA_CONFIG --add --allow-principal "User:$PRINCIPAL" --consumer --group "$APP_ID" --topic "$topic" #> /dev/null 2>&1 || echo "Failed"
+  done
+
+  echo "Setting acls for topic $LICENSE_TOPIC"
+  kafka-acls --bootstrap-server $BROKER_URL --command-config $KAFKA_CONFIG --add --allow-principal "User:$PRINCIPAL" --producer --topic "$LICENSE_TOPIC" #> /dev/null 2>&1 || echo "Failed"
+  kafka-acls --bootstrap-server $BROKER_URL --command-config $KAFKA_CONFIG --add --allow-principal "User:$PRINCIPAL" --consumer --group "$APP_ID" --topic "$LICENSE_TOPIC" #> /dev/null 2>&1 || echo "Failed"
  
-  kafka-acls --bootstrap-server $BROKER_URL --command-config $KAFKA_CONFIG --add --allow-principal "User:${C3_PRINCIPAL}" \
-  --allow-host "*" --operation Describe --cluster $CLUSTER_ID
-  [ $? -eq 1 ] && echo "unable to make create ACL for cluster \"$CLUSTER_ID\" and principal \"$C3_PRINCIPAL\"" && exit
 
-  kafka-acls --bootstrap-server $BROKER_URL --command-config $KAFKA_CONFIG --add --allow-principal "User:${C3_PRINCIPAL}" \
-  --allow-host "*" --operation DescribeConfigs --cluster $CLUSTER_ID
-  [ $? -eq 1 ] && echo "unable to create producer ACL for cluster \"$CLUSTER_ID\" and principal \"$C3_PRINCIPAL\"" && exit
-
-  kafka-acls --bootstrap-server $BROKER_URL --command-config $KAFKA_CONFIG --add --allow-principal "User:${C3_PRINCIPAL}" \
-  --allow-host "*" --operation Create --topic $C3_TOPIC --resource-pattern-type PREFIXED
-  [ $? -eq 1 ] && echo "unable to make create ACL for topic \"$C3_TOPIC\" and principal \"$C3_PRINCIPAL\"" && exit
-
-  kafka-acls --bootstrap-server $BROKER_URL --command-config $KAFKA_CONFIG --add --allow-principal "User:${C3_PRINCIPAL}" \
-  --allow-host "*" --producer --topic $C3_TOPIC --resource-pattern-type PREFIXED
-  [ $? -eq 1 ] && echo "unable to create producer ACL for topic \"$C3_TOPIC\" and principal \"$C3_PRINCIPAL\"" && exit
-
-  kafka-acls --bootstrap-server $BROKER_URL --command-config $KAFKA_CONFIG --add --allow-principal "User:${C3_PRINCIPAL}" \
-  --allow-host "*" --consumer --group $C3_GROUP --topic $C3_TOPIC --resource-pattern-type PREFIXED
-  [ $? -eq 1 ] && echo "unable to create consumer ACL for group \"$C3_GROUP\", topic \"$C3_TOPIC\", and principal \"$C3_PRINCIPAL\"" && exit
-
-  kafka-acls --bootstrap-server $BROKER_URL --command-config $KAFKA_CONFIG --add --allow-principal "User:${C3_PRINCIPAL}" \
-  --allow-host "*" --producer --topic $LICENSE_TOPIC --resource-pattern-type PREFIXED
-  [ $? -eq 1 ] && echo "unable to create producer ACL for topic \"$LICENSE_TOPIC\" and principal \"$C3_PRINCIPAL\"" && exit
-
-  kafka-acls --bootstrap-server $BROKER_URL --command-config $KAFKA_CONFIG --add --allow-principal "User:${C3_PRINCIPAL}" \
-  --allow-host "*" --consumer --group $C3_GROUP --topic $LICENSE_TOPIC --resource-pattern-type PREFIXED
-  [ $? -eq 1 ] && echo "unable to create consumer ACL for group \"$C3_GROUP\", topic \"$LICENSE_TOPIC\", and principal \"$C3_PRINCIPAL\"" && exit
-
-  kafka-acls --bootstrap-server $BROKER_URL --command-config $KAFKA_CONFIG --add --allow-principal "User:${C3_PRINCIPAL}" \
-  --allow-host "*" --operation Create --topic $METRICS_TOPIC
-  [ $? -eq 1 ] && echo "unable to make create ACL for topic \"$METRICS_TOPIC\" and principal \"$C3_PRINCIPAL\"" && exit
-
-  kafka-acls --bootstrap-server $BROKER_URL --command-config $KAFKA_CONFIG --add --allow-principal "User:${C3_PRINCIPAL}" \
-  --allow-host "*" --producer --topic $METRICS_TOPIC --resource-pattern-type PREFIXED
-  [ $? -eq 1 ] && echo "unable to create producer ACL for topic \"$METRICS_TOPIC\" and principal \"$C3_PRINCIPAL\"" && exit
-
-  kafka-acls --bootstrap-server $BROKER_URL --command-config $KAFKA_CONFIG --add --allow-principal "User:${C3_PRINCIPAL}" \
-  --allow-host "*" --consumer --group $C3_GROUP --topic $METRICS_TOPIC --resource-pattern-type PREFIXED
-  [ $? -eq 1 ] && echo "unable to create consumer ACL for group \"$C3_GROUP\", topic \"$METRICS_TOPIC\", and principal \"$C3_PRINCIPAL\"" && exit
-
+  echo "Setting acls for topic $MONITORING_TOPIC"
+  kafka-acls --bootstrap-server $BROKER_URL --command-config $KAFKA_CONFIG --add --allow-principal "User:$PRINCIPAL" --producer --topic "$MONITORING_TOPIC" #> /dev/null 2>&1 || echo "Failed"
+  kafka-acls --bootstrap-server $BROKER_URL --command-config $KAFKA_CONFIG --add --allow-principal "User:$PRINCIPAL" --consumer --group "$APP_ID" --topic "$MONITORING_TOPIC" #> /dev/null 2>&1 || echo "Failed"
+ 
 done
 
 echo "Created general ACLs for Control Center"

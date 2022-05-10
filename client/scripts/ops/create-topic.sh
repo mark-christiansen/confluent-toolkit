@@ -11,4 +11,4 @@ TOPIC=$2
 [[ -z "$3" ]] && { echo "Partitions not specified" ; exit 1; }
 PARTITIONS=$3
 
-kafka-topics -bootstrap-server $BROKER_URL --command-config $KAFKA_CONFIG --create --topic $TOPIC --partitions $PARTITIONS
+kafka-topics -bootstrap-server $BROKER_URL --command-config $KAFKA_CONFIG --create --topic $TOPIC --partitions $PARTITIONS --replication-factor 3

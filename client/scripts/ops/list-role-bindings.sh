@@ -15,9 +15,4 @@ if [[ $TYPE == "Principal" ]]; then
 fi
 echo $FILTER
 
-# get the kafka cluster ID
-CLUSTER_ID=$(kafka-cluster cluster-id --bootstrap-server $BROKER_URL --config $KAFKA_CONFIG | sed -n "s/^Cluster ID: \(.*\)$/\1/p")
-[[ -z "$CLUSTER_ID" ]] && { echo "Kafka cluster ID could not be found" ; exit 1; }
-echo "Retrieved Kafka cluster ID: $CLUSTER_ID"
-
-confluent iam rolebinding list --kafka-cluster-id $CLUSTER_ID $FILTER
+confluent iam rolebinding list --cluster-name $KAFKA_CLUSTER $FILTER
