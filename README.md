@@ -5,8 +5,10 @@
 This project is used to launch, test and teardown different Confluent Platform environments in docker. The following environments have configurations setup:
 
 - Confluent Platform Enterprise with mTLS authentication and ACL authorization (env=mtls-acl)
+- Confluent Platform Enterprise with Kerberos (GSSAPI) authentication and ACL authorization (env=gssapi-acl)
 - Confluent Platform Enterprise with SASL Plain authentication and RBAC authorization (env=sasl-rbac)
 - Confluent Platform Enterprise with SASL SCRAM SHA-512 authentication and RBAC authorization (env=scram-rbac)
+- Confluent Platform Enterprise with SASL Kerberos (GSSAPI) authentication and RBAC authorization (env=gssapi-rbac)
 
 ## Requirements
 

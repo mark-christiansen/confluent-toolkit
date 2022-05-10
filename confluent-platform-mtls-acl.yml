@@ -5,7 +5,7 @@ services:
 
   zoo1:
     image: confluentinc/cp-zookeeper:${CONFLUENT_VERSION}
-    hostname: zoo1
+    hostname: zoo1.${DOMAIN}
     container_name: zoo1
     ports:
       - "2181:2181"
@@ -18,7 +18,7 @@ services:
       ZOOKEEPER_TICK_TIME: 2000
       ZOOKEEPER_INIT_LIMIT: 5
       ZOOKEEPER_SYNC_LIMIT: 2
-      ZOOKEEPER_SERVERS: zoo1:2888:3888;zoo2:2888:3888;zoo3:2888:3888
+      ZOOKEEPER_SERVERS: zoo1.${DOMAIN}:2888:3888;zoo2.${DOMAIN}:2888:3888;zoo3.${DOMAIN}:2888:3888
       ZOOKEEPER_SERVER_CNXN_FACTORY: org.apache.zookeeper.server.NettyServerCnxnFactory
       ZOOKEEPER_AUTH_PROVIDER_X509: org.apache.zookeeper.server.auth.X509AuthenticationProvider
       ZOOKEEPER_SSL_KEYSTORE_LOCATION: /var/ssl/private/zoo1.${DOMAIN}.keystore.jks
@@ -52,7 +52,7 @@ services:
 
   zoo2:
     image: confluentinc/cp-zookeeper:${CONFLUENT_VERSION}
-    hostname: zoo2
+    hostname: zoo2.${DOMAIN}
     container_name: zoo2
     ports:
       - "2182:2182"
@@ -65,7 +65,7 @@ services:
       ZOOKEEPER_TICK_TIME: 2000
       ZOOKEEPER_INIT_LIMIT: 5
       ZOOKEEPER_SYNC_LIMIT: 2
-      ZOOKEEPER_SERVERS: zoo1:2888:3888;zoo2:2888:3888;zoo3:2888:3888
+      ZOOKEEPER_SERVERS: zoo1.${DOMAIN}:2888:3888;zoo2.${DOMAIN}:2888:3888;zoo3.${DOMAIN}:2888:3888
       ZOOKEEPER_SERVER_CNXN_FACTORY: org.apache.zookeeper.server.NettyServerCnxnFactory
       ZOOKEEPER_AUTH_PROVIDER_X509: org.apache.zookeeper.server.auth.X509AuthenticationProvider
       ZOOKEEPER_SSL_KEYSTORE_LOCATION: /var/ssl/private/zoo2.${DOMAIN}.keystore.jks
@@ -100,7 +100,7 @@ services:
 
   zoo3:
     image: confluentinc/cp-zookeeper:${CONFLUENT_VERSION}
-    hostname: zoo3
+    hostname: zoo3.${DOMAIN}
     container_name: zoo3
     ports:
       - "2183:2183"
@@ -113,7 +113,7 @@ services:
       ZOOKEEPER_TICK_TIME: 2000
       ZOOKEEPER_INIT_LIMIT: 5
       ZOOKEEPER_SYNC_LIMIT: 2
-      ZOOKEEPER_SERVERS: zoo1:2888:3888;zoo2:2888:3888;zoo3:2888:3888
+      ZOOKEEPER_SERVERS: zoo1.${DOMAIN}:2888:3888;zoo2.${DOMAIN}:2888:3888;zoo3.${DOMAIN}:2888:3888
       ZOOKEEPER_SERVER_CNXN_FACTORY: org.apache.zookeeper.server.NettyServerCnxnFactory
       ZOOKEEPER_AUTH_PROVIDER_X509: org.apache.zookeeper.server.auth.X509AuthenticationProvider
       ZOOKEEPER_SSL_KEYSTORE_LOCATION: /var/ssl/private/zoo3.${DOMAIN}.keystore.jks
@@ -139,7 +139,7 @@ services:
     networks:
       - kafka-network
     healthcheck:
-      test: ["CMD", "bash", "-c", "(echo -e ruok | openssl 2>&1 s_client -quiet -connect zoo3.${DOMAIN}:2182 -CAfile /var/ssl/private/intermediate.crt -cert /var/ssl/private/kafka1.${DOMAIN}_cert.pem -key /var/ssl/private/kafka1.${DOMAIN}_key.pem -pass pass:serverpassword) | grep -e imok"]
+      test: ["CMD", "bash", "-c", "(echo -e ruok | openssl 2>&1 s_client -quiet -connect zoo3.${DOMAIN}:2183 -CAfile /var/ssl/private/intermediate.crt -cert /var/ssl/private/kafka1.${DOMAIN}_cert.pem -key /var/ssl/private/kafka1.${DOMAIN}_key.pem -pass pass:serverpassword) | grep -e imok"]
       start_period: 5s
       interval: 20s
       timeout: 10s
@@ -169,7 +169,7 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       # zookeeper
-      KAFKA_ZOOKEEPER_CONNECT: zoo1:2181,zoo2:2182,zoo3:2183
+      KAFKA_ZOOKEEPER_CONNECT: zoo1.${DOMAIN}:2181,zoo2.${DOMAIN}:2182,zoo3.${DOMAIN}:2183
       KAFKA_ZOOKEEPER_CLIENT_CNXN_SOCKET: org.apache.zookeeper.ClientCnxnSocketNetty
       KAFKA_ZOOKEEPER_SSL_CLIENT_ENABLE: 'true'
       KAFKA_ZOOKEEPER_SSL_KEYSTORE_LOCATION: /var/ssl/private/kafka1.${DOMAIN}.keystore.jks
@@ -191,7 +191,7 @@ services:
       KAFKA_SSL_CLIENT_AUTH: 'required'
       # authorization
       KAFKA_AUTHORIZER_CLASS_NAME: kafka.security.authorizer.AclAuthorizer
-      KAFKA_SUPER_USERS: "User:kafka1;User:kafka2;User:kafka3"
+      KAFKA_SUPER_USERS: "User:kafka1;User:kafka2;User:kafka3;User:admin"
       KAFKA_SSL_PRINCIPAL_MAPPING_RULES: RULE:^CN=([a-zA-Z0-9]*).*$$/$$1/L,DEFAULT
       #KAFKA_SSL_CIPHER_SUITES: ${TLS_CIPHER_SUITES}
       KAFKA_CONFLUENT_BALANCER_ENABLE: 'true'
@@ -250,7 +250,7 @@ services:
     environment:
       KAFKA_BROKER_ID: 2
       # zookeeper
-      KAFKA_ZOOKEEPER_CONNECT: zoo1:2181,zoo2:2182,zoo3:2183
+      KAFKA_ZOOKEEPER_CONNECT: zoo1.${DOMAIN}:2181,zoo2.${DOMAIN}:2182,zoo3.${DOMAIN}:2183
       KAFKA_ZOOKEEPER_CLIENT_CNXN_SOCKET: org.apache.zookeeper.ClientCnxnSocketNetty
       KAFKA_ZOOKEEPER_SSL_CLIENT_ENABLE: 'true'
       KAFKA_ZOOKEEPER_SSL_KEYSTORE_LOCATION: /var/ssl/private/kafka2.${DOMAIN}.keystore.jks
@@ -261,8 +261,8 @@ services:
       # listeners
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:SSL,EXTERNAL:SSL
       KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
-      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka2:29094,EXTERNAL://localhost:9094
-      KAFKA_LISTENERS: INTERNAL://kafka2:29094,EXTERNAL://kafka2:9094
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka2.${DOMAIN}:29094,EXTERNAL://localhost:9094
+      KAFKA_LISTENERS: INTERNAL://kafka2.${DOMAIN}:29094,EXTERNAL://kafka2.${DOMAIN}:9094
       # encryption
       KAFKA_SECURITY_PROTOCOL: SSL
       KAFKA_SSL_KEYSTORE_LOCATION: /var/ssl/private/kafka2.${DOMAIN}.keystore.jks
@@ -272,7 +272,7 @@ services:
       KAFKA_SSL_CLIENT_AUTH: 'required'
       # authorization
       KAFKA_AUTHORIZER_CLASS_NAME: kafka.security.authorizer.AclAuthorizer
-      KAFKA_SUPER_USERS: "User:kafka1;User:kafka2;User:kafka3"
+      KAFKA_SUPER_USERS: "User:kafka1;User:kafka2;User:kafka3;User:admin"
       KAFKA_SSL_PRINCIPAL_MAPPING_RULES: RULE:^CN=([a-zA-Z0-9]*).*$$/$$1/L,DEFAULT
       #KAFKA_SSL_CIPHER_SUITES: ${TLS_CIPHER_SUITES}
       KAFKA_CONFLUENT_BALANCER_ENABLE: 'true'
@@ -331,7 +331,7 @@ services:
     environment:
       KAFKA_BROKER_ID: 3
       # zookeeper
-      KAFKA_ZOOKEEPER_CONNECT: zoo1:2181,zoo2:2182,zoo3:2183
+      KAFKA_ZOOKEEPER_CONNECT: zoo1.${DOMAIN}:2181,zoo2.${DOMAIN}:2182,zoo3.${DOMAIN}:2183
       KAFKA_ZOOKEEPER_CLIENT_CNXN_SOCKET: org.apache.zookeeper.ClientCnxnSocketNetty
       KAFKA_ZOOKEEPER_SSL_CLIENT_ENABLE: 'true'
       KAFKA_ZOOKEEPER_SSL_KEYSTORE_LOCATION: /var/ssl/private/kafka3.${DOMAIN}.keystore.jks
@@ -342,8 +342,8 @@ services:
       # listeners
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:SSL,EXTERNAL:SSL
       KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
-      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka3:29095,EXTERNAL://localhost:9095
-      KAFKA_LISTENERS: INTERNAL://kafka3:29095,EXTERNAL://kafka3:9095
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka3.${DOMAIN}:29095,EXTERNAL://localhost:9095
+      KAFKA_LISTENERS: INTERNAL://kafka3.${DOMAIN}:29095,EXTERNAL://kafka3.${DOMAIN}:9095
       # encryption
       KAFKA_SECURITY_PROTOCOL: SSL
       KAFKA_SSL_KEYSTORE_LOCATION: /var/ssl/private/kafka3.${DOMAIN}.keystore.jks
@@ -353,7 +353,7 @@ services:
       KAFKA_SSL_CLIENT_AUTH: 'required'
       # authorization
       KAFKA_AUTHORIZER_CLASS_NAME: kafka.security.authorizer.AclAuthorizer
-      KAFKA_SUPER_USERS: "User:kafka1;User:kafka2;User:kafka3"
+      KAFKA_SUPER_USERS: "User:kafka1;User:kafka2;User:kafka3;User:admin"
       KAFKA_SSL_PRINCIPAL_MAPPING_RULES: RULE:^CN=([a-zA-Z0-9]*).*$$/$$1/L,DEFAULT
       #KAFKA_SUPER_USERS: "User:CN=kafka1.${DOMAIN},OU=IT,O=IDS,L=MINNEAPOLIS,ST=MN,C=US;User:CN=kafka2.${DOMAIN},OU=IT,O=IDS,L=MINNEAPOLIS,ST=MN,C=US;User:CN=kafka3.${DOMAIN},OU=IT,O=IDS,L=MINNEAPOLIS,ST=MN,C=US"
       #KAFKA_SSL_CIPHER_SUITES: ${TLS_CIPHER_SUITES}
@@ -428,10 +428,10 @@ services:
       - kafka-network
     healthcheck:
       test: ["CMD", "bash", "-c", "find /tmp/initialized"]
-      start_period: 30s
-      interval: 10s
-      timeout: 10s
-      retries: 10
+      start_period: 60s
+      interval: 15s
+      timeout: 15s
+      retries: 15
 
 ################## SCHEMA REGISTRY ##################
 
@@ -594,8 +594,7 @@ services:
       KSQL_LISTENERS: "https://0.0.0.0:8088"
       KSQL_HOST_NAME: ksql1     
       # broker connection
-      # KSQL_BOOTSTRAP_SERVERS: lb.${DOMAIN}:29092
-      KSQL_BOOTSTRAP_SERVERS: kafka1.${DOMAIN}:29093,kafka2.${DOMAIN}:29094,kafka3.${DOMAIN}:29095
+      KSQL_BOOTSTRAP_SERVERS: lb.${DOMAIN}:29092
       # encryption
       KSQL_SSL_KEYSTORE_LOCATION: '/var/ssl/private/ksql1.${DOMAIN}.keystore.jks'
       KSQL_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
@@ -604,14 +603,7 @@ services:
       KSQL_SSL_ENABLED_PROTOCOLS: "TLSv1.3,TLSv1.2" # Before v6.1.0: disabling TLSv1.x is required 
       KSQL_SSL_CIPHER_SUITES: ${SSL_CIPHER_SUITES}
       # authentication
-      KSQL_SECURITY_PROTOCOL: SASL_SSL
-      KSQL_SASL_MECHANISM: GSSAPI
-      KSQL_SASL_KERBEROS_SERVICE_NAME: kafka
-      KSQL_SASL_JAAS_CONFIG: "com.sun.security.auth.module.Krb5LoginModule required \
-        useKeyTab=true \
-        storeKey=true \
-        keyTab=\"/etc/security/keytabs/ksql.keytab\" \
-        principal=\"ksql1@${REALM}\";"
+      KSQL_SECURITY_PROTOCOL: SSL
       # schema registry
       KSQL_KSQL_SCHEMA_REGISTRY_URL: https://schema1:8081
       KSQL_KSQL_SCHEMA_REGISTRY_SSL_TRUSTSTORE_LOCATION: '/var/ssl/private/ksql1.${DOMAIN}.truststore.jks'
@@ -625,14 +617,7 @@ services:
       KSQL_CONFLUENT_MONITORING_INTERCEPTOR_SSL_TRUSTSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
       KSQL_CONFLUENT_MONITORING_INTERCEPTOR_SSL_KEYSTORE_LOCATION: '/var/ssl/private/ksql1.${DOMAIN}.keystore.jks'
       KSQL_CONFLUENT_MONITORING_INTERCEPTOR_SSL_KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}
-      KSQL_CONFLUENT_MONITORING_INTERCEPTOR_SECURITY_PROTOCOL: SASL_SSL
-      KSQL_CONFLUENT_MONITORING_INTERCEPTOR_SASL_MECHANISM: GSSAPI
-      KSQL_CONFLUENT_MONITORING_INTERCEPTOR_SASL_LOGIN_CALLBACK_HANDLER_CLASS: io.confluent.kafka.clients.plugins.auth.token.TokenUserLoginCallbackHandler
-      KSQL_CONFLUENT_MONITORING_INTERCEPTOR_SASL_JAAS_CONFIG: "com.sun.security.auth.module.Krb5LoginModule required \
-        useKeyTab=true \
-        storeKey=true \
-        keyTab=\"/etc/security/keytabs/ksql.keytab\" \
-        principal=\"ksql1@${REALM}\";"
+      KSQL_CONFLUENT_MONITORING_INTERCEPTOR_SECURITY_PROTOCOL: SSL
       # logging
       KSQL_LOG4J_ROOT_LOGLEVEL: INFO
     volumes:
