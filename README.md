@@ -23,7 +23,7 @@ The following programs are required to exist on the host machine to use this pro
 There are a few custom docker images that need to be created for use in the various environments. They are:
 
 - Kafka Client (kafka-client): This is an `openjdk` image with Confluent Platform community installed and several operational scripts. This image is used for running setup scripts and as a way to view things inside of Kafka without using Control Center.
-- Kafka Connect Vault (kafka-connect-vault): This is a `cp-server-connect` image with the `jcustenborder/kafka-config-provider-vault` library installed. This library is the Hashicorp Vault secrets provider which is used to pull secrets for connectors similar to the Connect Secretys Registry, but instead against Hashicorp Vault.
+- Kafka Connect Vault (kafka-connect-vault): This is a `cp-server-connect` image with the `jcustenborder/kafka-config-provider-vault` library installed. This library is the Hashicorp Vault secrets provider which is used to pull secrets for connectors similar to the Kafka Connect Secret Registry, but instead against Hashicorp Vault. Kafka Connect workers need this library in their classpath before startup. That's why an image needed to be created instead of just addng the library to the plugin path.
 - KDC Server (kdc-server): This is a `debian:jesse` image with `krb5-kdc` and `krb5-admin-server` installed which is used for storing and maintaining Kerberos secrets.
 
 To build these images you can run the `docker-compose build` command against the Kerberos RBAC environment as shown below. This will not launch the environment, only build any custom images needed for these environments.
