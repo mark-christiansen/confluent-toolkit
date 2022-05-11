@@ -48,6 +48,57 @@ To tear down an environment execute the script "teardown.sh" in the base of this
 
 This will stop all the runnning containers for the environment in Docker and clear out the "volumes" folder when finished.
 
+## Kafka Client
+
+Every environment should have user principals setup for all the components (Zookeeper, Kafka Brokers, Schema Registry, Kafka Connect, KsqlDB, Control Center) as well as these additional users:
+
+- Datagen Source Connector (datagen): Has permission to write to a single topic ("env.app.person")
+- JDBC Sink Connector (jdbcsink): Has permission to read from a single topic ("env.app.person")
+- Admin (admin): Is either a super user or a system administrator in Kafka cluster, Schema Registry cluster, Kafka Conenct cluster and KsqlDB cluster
+- Client (client): A normal user that has no access in any of the clusters
+
+A `client` container is launched in every environment. On startup, this container executes scripts to create ACLs or RBAC role bindings for the Schema Registry, Kafka Connect, KsqlDB, and Control Center users. This container also has a mount that includes several useful operational scripts. To execute these scripts shell into the `client` container.
+
+```
+    docker exec -it client /bin/bash
+```
+
+The scripts are mounted under the `/scripts` directory inside the container and there are several sub-folders underneath this folder.
+
+- `clusterlink`: scripts pertaining to the Cluster Linking feature of Confluent Platform (creating cluster links, removing cluster links, creating mirror topics, promoting mirror topics, etc)
+- `config`: folder containing Kafka broker connection property files for the different environments and users
+- `connect`: scripts for creating and deleting Kafka Connect connectors (like Datagen Source Connector and JDBC Sink Connector)
+- `ops`: scripts for performing routine Kafka operations such as creating topics, viewing consumers, resetting consumer offsets, etc
+- `setup`: scripts for setting up permissions for users, registering clusters, etc
+
+When executing a script, the first argument always relates to the properties file being used from the `config` folder. For example, when executing the `list-topics.sh` script in the `ops` folder for the `confluent-platform-gssapi-rbac.yml` you would use the `gssapi.config` in `config` as shown below.
+
+```
+    cd /scripts/ops
+    ./list-topics.sh gssapi
+```
+
+The `gssapi` configuration uses the `admin` user. There's also a `gssapi_client` user that will use the `client` user. These are the configurations currently available to run scripts:
+
+- `gssapi`: Admin user for any of the Kerberos (GSSAPI) authentication environments
+- `gssapi_client`: Client user for any of the Kerberos (GSSAPI) authentication environments
+- `mtls`: Admin user for any of the mTLS authentication environments
+- `sasl`: Admin user for any of the SASL Plain authentication environments
+- `sasl_client`: Client user for any of the SASL Plain authentication environments
+- `scram`: Admin user for any of the SASL Scram authentication environments
+- `token`: Admin user for any of the RBAC environments that have OAuth Token authentication enabled (`sasl-rbac`, `gssapi-rbac`, `scram-rbac`)
+
+You will notice that each of these has a `local` version, such as `gssapi_client_local`. These configs are for running the scripts outside of Docker where this repo is installed.
+
+```
+    cd /Users/myuser/repos/objectpartners/confluent-platform-toolkit/client/scripts/ops
+    ./list-topics.sh gssapi_local
+```
+
+## Control Center
+
+Control Center is enabled in each environment and can accessed from a browser at the URL `https://localhost:9021`. When you are prompted for a username and password (either by Basic Auth popup or a login screen), enter `admin` for username and `admin-secret` for password. This is the administrator user that should be able to access and modify any feature in Control Center. You can login with other users as well, but features will be hidden depending on that user's permissions.
+
 ## Environment: mTLS authentication and ACL authorization
 
 This environment is a three broker, three zookeeper cluster of Confluent Platform Enterprise with one Schema Registry server and one Kafka Connect worker. SSL is enabled for all communication between zookeeper servers, brokers and between components and brokers (so basically everywhere). The authentication method being used in mTLS, meaning that the principal is coming from the CN of the client certificate. There is no authentication on the Schema Registry server and Kafka Connect REST APIs. Authorization is performed through Kafka ACLs for reading/writing/creating topics and using consumer groups. There are examples of these ACLs for the Schema Registry server and Kafka Connect worker. Two connectors, Datagen Connector and JDBC Sink Connector, are setup by default and demonstrate the ACLs needed for their principals.
