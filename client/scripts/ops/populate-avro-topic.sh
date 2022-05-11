@@ -13,7 +13,7 @@ MSGS=$3 # messages per producer thread
 
 SCHEMA_USER='admin'
 SCHEMA_PASSWORD='admin-secret'
-TRUSTSTORE_FILENAME='kafka1.kafka_network.truststore.jks'
+TRUSTSTORE_FILENAME='kafka1.${DOMAIN}.truststore.jks'
 VALUE_SCHEMA='{"type":"record","name":"test","fields":[{"name":"id","type":"long"},{"name":"name","type":"string"},{"name":"amount","type":"double"}]}'
 
 # this and the basic auth properties being passed in the  command are hacks to get around the fact that 

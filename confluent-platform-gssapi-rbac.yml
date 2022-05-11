@@ -1256,8 +1256,8 @@ services:
       # logging
       KSQL_LOG4J_ROOT_LOGLEVEL: WARN
     volumes:
-      - ./secrets/kerberos/security/keytabs/ksql.keytab:/etc/security/keytabs/ksql.keytab:ro
-      - ./secrets/kerberos/krb5.conf:/etc/krb5.conf:ro
+      - ./kerberos/keytabs/ksql.keytab:/etc/security/keytabs/ksql.keytab:ro
+      - ./kerberos/krb5.conf:/etc/krb5.conf:ro
       - ./certs:/var/ssl/private:ro
     networks:
       - kafka-network
@@ -1420,8 +1420,8 @@ services:
     volumes:
       - ./volumes/c3/data:/var/lib/c3/data
       - ./certs:/var/ssl/private:ro
-      - ./secrets/kerberos/security/keytabs/c3.keytab:/etc/security/keytabs/c3.keytab:ro
-      - ./secrets/kerberos/krb5.conf:/etc/krb5.conf:ro
+      - ./kerberos/keytabs/c3.keytab:/etc/security/keytabs/c3.keytab:ro
+      - ./kerberos/krb5.conf:/etc/krb5.conf:ro
     networks:
       - kafka-network
 
