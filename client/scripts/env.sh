@@ -270,6 +270,7 @@ gssapi() {
     export SCHEMA_URL="https://schema1:8081"
     export MDS_URL="https://kafka1:8091"
     export KAFKA_CONNECT_URL="https://connect1:8083"
+    export KSQL_URL="https://ksql1:8088"
 }
 
 gssapi_local() {
@@ -288,6 +289,7 @@ gssapi_local() {
     export SCHEMA_URL="https://localhost:8081"
     export MDS_URL="https://localhost:8091"
     export KAFKA_CONNECT_URL="https://localhost:8083"
+    export KSQL_URL="https://localhost:8088"
 }
 
 gssapi_client() {
@@ -306,6 +308,7 @@ gssapi_client() {
     export SCHEMA_URL="https://schema1:8081"
     export MDS_URL="https://kafka1:8091"
     export KAFKA_CONNECT_URL="https://connect1:8083"
+    export KSQL_URL="https://ksql1:8088"
 }
 
 gssapi_client_local() {
@@ -324,6 +327,7 @@ gssapi_client_local() {
     export SCHEMA_URL="https://localhost:8081"
     export MDS_URL="https://localhost:8091"
     export KAFKA_CONNECT_URL="https://localhost:8083"
+    export KSQL_URL="https://localhost:8088"
 }
 
 gssapi_super() {
@@ -342,6 +346,7 @@ gssapi_super() {
     export SCHEMA_URL="https://schema1:8081"
     export MDS_URL="https://kafka1:8091"
     export KAFKA_CONNECT_URL="https://connect1:8083"
+    export KSQL_URL="https://ksql1:8088"
 }
 
 gssapi_super_local() {
@@ -360,6 +365,7 @@ gssapi_super_local() {
     export SCHEMA_URL="https://localhost:8081"
     export MDS_URL="https://localhost:8091"
     export KAFKA_CONNECT_URL="https://localhost:8083"
+    export KSQL_URL="https://localhost:8088"
 }
 
 # env from user input
