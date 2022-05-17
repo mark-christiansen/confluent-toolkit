@@ -9,6 +9,7 @@ This project is used to launch, test and teardown different Confluent Platform e
 - Confluent Platform Enterprise with SASL Plain authentication and RBAC authorization (env=sasl-rbac)
 - Confluent Platform Enterprise with SASL SCRAM SHA-512 authentication and RBAC authorization (env=scram-rbac)
 - Confluent Platform Enterprise with SASL Kerberos (GSSAPI) authentication and RBAC authorization (env=gssapi-rbac)
+- Confluent Platform Enterprise with Kraft using mTLS authentication and no authorization (env=kraft)
 
 ## Requirements
 
@@ -101,9 +102,9 @@ Control Center is enabled in each environment and can accessed from a browser at
 
 ## Environment: mTLS authentication and ACL authorization
 
-This environment is a three broker, three zookeeper cluster of Confluent Platform Enterprise with one Schema Registry server and one Kafka Connect worker. SSL is enabled for all communication between zookeeper servers, brokers and between components and brokers (so basically everywhere). The authentication method being used in mTLS, meaning that the principal is coming from the CN of the client certificate. There is no authentication on the Schema Registry server and Kafka Connect REST APIs. Authorization is performed through Kafka ACLs for reading/writing/creating topics and using consumer groups. There are examples of these ACLs for the Schema Registry server and Kafka Connect worker. Two connectors, Datagen Connector and JDBC Sink Connector, are setup by default and demonstrate the ACLs needed for their principals.
+This environment is a three broker, three zookeeper cluster of Confluent Platform Enterprise with one Schema Registry server, one Kafka Connect worker, one KSQL node, and one Control Center instance. SSL is enabled for all communication between zookeeper servers, brokers and between components and brokers (so basically everywhere). The authentication method being used in mTLS, meaning that the principal is coming from the CN of the client certificate. There is no authentication on the Schema Registry server and Kafka Connect REST APIs. Authorization is performed through Kafka ACLs for reading/writing/creating topics and using consumer groups. There are examples of these ACLs for the Schema Registry server and Kafka Connect worker. Two connectors, Datagen Connector and JDBC Sink Connector, are setup by default and demonstrate the ACLs needed for their principals.
 
-If you want to verify your environment is working correctly, you can open up a connection to the Postgres server on "localhost:5432" running in Docker and verify that there is a table created in the "public" schema called "person" which should be populated with records. This table is populated by the JDBC Sink Connector from a topic populated by the Datagen Connector.
+If you want to verify your environment is working correctly, you can open up a connection to the Postgres server on "localhost:5432" running in Docker and verify that there is a table created in the `public` schema called `person` which should be populated with records. This table is populated by the JDBC Sink Connector from a topic populated by the Datagen Connector.
 
 ## Environment: SASL Kerberos (GSSAPI) authentication and ACL authorization
 
@@ -111,7 +112,7 @@ This environment is a three broker, three zookeeper cluster of Confluent Platfor
 
 This environment uses Kerberos (GSSAPI) for authentication to brokers, which means that principals and their passwords must be set in the kdc-server. Authentication to Zookeeper is Kerberos authentication. If the `./kerberos/init-script.sh` script is updated with new principals the `kdc-server` image will need to be rebuilt. This can be done by running `docker-compose -f confluent-platform-gssapi-acl.yml build`.
 
-If you want to verify your environment is working correctly, you can open up a connection to the Postgres server on "localhost:5432" running in Docker and verify that there is a table created in the "public" schema called "person" which should be populated with records. This table is populated by the JDBC Sink Connector from a topic populated by the 
+If you want to verify your environment is working correctly, you can open up a connection to the Postgres server on "localhost:5432" running in Docker and verify that there is a table created in the `public` schema called `person` which should be populated with records. This table is populated by the JDBC Sink Connector from a topic populated by the 
 Datagen Connector.
 
 ## Environment: SASL Plain authentication and RBAC authorization
@@ -120,7 +121,7 @@ This environment is a three broker, three zookeeper cluster of Confluent Platfor
 
 This environment uses plain authentication to the brokers, so the broker clients need to have usernames/passwords in the JAAS config for the broker listener. Authentication to Zookeeper is Digest Authentication.
 
-If you want to verify your environment is working correctly, you can open up a connection to the Postgres server on "localhost:5432" running in Docker and verify that there is a table created in the "public" schema called "person" which should be populated with records. This table is populated by the JDBC Sink Connector from a topic populated by the Datagen Connector.
+If you want to verify your environment is working correctly, you can open up a connection to the Postgres server on "localhost:5432" running in Docker and verify that there is a table created in the `public` schema called `person` which should be populated with records. This table is populated by the JDBC Sink Connector from a topic populated by the Datagen Connector.
 
 ## Environment: SASL SCRAM SHA-512 authentication and RBAC authorization
 
@@ -128,7 +129,7 @@ This environment is a three broker, three zookeeper cluster of Confluent Platfor
 
 This environment uses SCRAM SHA-512 for authentication to brokers, which means the usernames and passwords for the broker clients (and all components) are stored in Zookeeper as Kafka configs for "user" data in Zookeeper. Because the Kafka user is a SCRAM user as well, there is a jumphost called "scram-client" that is used to deploy SRAM user data to Zookeeper before the brokers are brought up. Authentication to Zookeeper is Digest Authentication.
 
-If you want to verify your environment is working correctly, you can open up a connection to the Postgres server on "localhost:5432" running in Docker and verify that there is a table created in the "public" schema called "person" which should be populated with records. This table is populated by the JDBC Sink Connector from a topic populated by the Datagen Connector.
+If you want to verify your environment is working correctly, you can open up a connection to the Postgres server on "localhost:5432" running in Docker and verify that there is a table created in the `public` schema called `person` which should be populated with records. This table is populated by the JDBC Sink Connector from a topic populated by the Datagen Connector.
 
 ## Environment: SASL Kerberos (GSSAPI) authentication and RBAC authorization
 
@@ -136,7 +137,15 @@ This environment is a three broker, three zookeeper cluster of Confluent Platfor
 
 This environment uses Kerberos (GSSAPI) for authentication to brokers, which means that principals and their passwords must be set in the kdc-server. Authentication to Zookeeper is Kerberos authentication. If the `./kerberos/init-script.sh` script is updated with new principals the `kdc-server` image will need to be rebuilt. This can be done by running `docker-compose -f confluent-platform-gssapi-rbac.yml build`.
 
-If you want to verify your environment is working correctly, you can open up a connection to the Postgres server on "localhost:5432" running in Docker and verify that there is a table created in the "public" schema called "person" which should be populated with records. This table is populated by the JDBC Sink Connector from a topic populated by the Datagen Connector.
+If you want to verify your environment is working correctly, you can open up a connection to the Postgres server on "localhost:5432" running in Docker and verify that there is a table created in the `public` schema called `person` which should be populated with records. This table is populated by the JDBC Sink Connector from a topic populated by the Datagen Connector.
+
+## Environment: Kraft with mTLS authentication and no authorization
+
+This environment is a three broker, zero zookeeper cluster of Confluent Platform Enterprise with one Schema Registry server, one Kafka Connect worker, one KSQL node, and one Control Center instance. SSL is enabled for all communication between brokers and between components and brokers (so basically everywhere). The brokers are using [KRaft](https://github.com/apache/kafka/tree/trunk/raft) instead of Zookeeper for storing cluster metadata. KRaft is not in a production status as of when this environment was created on 5/17/22. KRaft is missing support for many security features like ACL and RBAC authorization, as well as Self Balancing and Cluster Linking. When brokers using KRaft are started, cluster ID needs to be specified in the broker properties, the broker storage needs to be formatted with the cluster ID, and the check for the "zookeeper.connect" property needs to be removed. This is all handled by an initialization script (`kraft/initialize-broker.sh`) that runs before the brokers startup.
+
+The authentication method being used in mTLS, meaning that the principal is coming from the CN of the client certificate. There is basic authentication on the Schema Registry server and Kafka Connect REST APIs. There is no authorization setup because it isn't supported by KRaft. Two connectors, Datagen Connector and JDBC Sink Connector, are setup by default.
+
+If you want to verify your environment is working correctly, you can open up a connection to the Postgres server on "localhost:5432" running in Docker and verify that there is a table created in the `public` schema called `person` which should be populated with records. This table is populated by the JDBC Sink Connector from a topic populated by the Datagen Connector.
 
 ## Usage for Confluent Professional Services (CPS) Engagements
 

@@ -862,7 +862,7 @@ services:
 ################## SCHEMA REGISTRY ##################
 
   schema1:
-    image: confluentinc/cp-schema-registry:${CONFLUENT_VERSION}
+    image: confluentinc/cp-schema-registry:${SCHEMA_REGISTRY_VERSION}
     hostname: schema1
     container_name: schema1
     links:

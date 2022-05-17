@@ -8,9 +8,9 @@ cd ${BASE}
 [[ -z "$2" ]] && { echo "Topic name not specified" ; exit 1; }
 TOPIC=$2
 
-kafka-mirrors --bootstrap-server $BROKER_URL --pause --topics $TOPIC --command-config $KAFKA_CONFIG
+kafka-mirrors --bootstrap-server $BROKER_URL --unpause --topics $TOPIC --command-config $KAFKA_CONFIG
 
-echo "Finished pausing topic $TOPIC"
+echo "Finished unpausing topic $TOPIC"
 
 # check status of mirror topic
 sleep 5

@@ -3,7 +3,7 @@
 START=$SECONDS
 
 # env from user input
-ENVS=("mtls-acl" "sasl-rbac" "scram-rbac" "gssapi-acl" "gssapi-rbac")
+ENVS=("mtls-acl" "sasl-rbac" "scram-rbac" "gssapi-acl" "gssapi-rbac" "cl" "kraft")
 [[ -z "$1" ]] && { echo "Environment (${ENVS[@]}) not specified" ; exit 1; }
 [[ ! " ${ENVS[@]} " =~ " $1 " ]] && { echo "Invalid environment $1 specified. Valid envs are (${ENVS[@]})." ; exit 1; }
 ENV=$1
@@ -56,6 +56,8 @@ elif [[ $ENV == "gssapi-acl" ]]; then
   ROLE="gssapi_super"
 elif [[ $ENV == "gssapi-rbac" ]]; then
   ROLE="gssapi"
+elif [[ $ENV == "kraft" ]]; then
+  ROLE="mtls_noacl"
 else 
   DURATION=$(( SECONDS - START ))
   echo ""

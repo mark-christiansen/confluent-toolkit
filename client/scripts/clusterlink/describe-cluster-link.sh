@@ -8,4 +8,4 @@ cd ${BASE}
 [[ -z "$2" ]] && { echo "Cluster link name not specified" ; exit 1; }
 NAME=$2
 
-kafka-configs --bootstrap-server $BROKER_URL --describe --cluster-link $NAME --command-config $KAFKA_CONFIG
+kafka-configs --bootstrap-server $BROKER_URL --describe --cluster-link $NAME --command-config $KAFKA_CONFIG --include-topics

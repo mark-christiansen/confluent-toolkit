@@ -19,7 +19,7 @@ MSG_SIZE=102400 # message size in bytes
 LOG_DIR="/tmp/perf"
 
 # create directory to log to
-mkdir -p /tmp/logs
+mkdir -p $LOG_DIR
 
 echo "Starting producer performance test"
 echo "Launching $THREADS producer performance threads"

@@ -30,7 +30,7 @@ if [[ $RBAC == "true" ]]; then
   confluent iam rolebinding create --principal User:$PRINCIPAL --role DeveloperRead --resource Subject:$SUBJECT --cluster-name $SCHEMA_CLUSTER
 
 # create ACLs for jdbcsink connector if RBAC not enabled
-else
+elif [[ $ACL == "true" ]]; then
 
   kafka-acls --bootstrap-server $BROKER_URL --command-config $KAFKA_CONFIG --add --allow-principal "User:${PRINCIPAL}" \
   --allow-host "*" --consumer --topic $TOPIC --group $GROUP
