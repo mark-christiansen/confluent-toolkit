@@ -25,7 +25,7 @@ if [[ $RBAC == "true" ]]; then
   confluent iam rolebinding create --principal User:$PRINCIPAL --role DeveloperWrite --resource Subject:$SUBJECT --cluster-name $SCHEMA_CLUSTER
 
 # create ACLs for datagen connector if RBAC not enabled
-else
+elif [[ $ACL == "true" ]]; then
 
   kafka-acls --bootstrap-server $BROKER_URL --command-config $KAFKA_CONFIG --add --allow-principal "User:${PRINCIPAL}" \
   --allow-host "*" --producer --topic $TOPIC

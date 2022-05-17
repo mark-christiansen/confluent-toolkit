@@ -17,8 +17,8 @@ services:
         LDAP_READONLY_USER_USERNAME: "mds"
         LDAP_READONLY_USER_PASSWORD: "mds-secret"
         #LDAP_TLS_VERIFY_CLIENT: try
-        #LDAP_TLS_CRT_FILENAME: ldap.kafka_network_cert.pem
-        #LDAP_TLS_KEY_FILENAME: ldap.kafka_network_key.pem
+        #LDAP_TLS_CRT_FILENAME: ldap.kafka-network_cert.pem
+        #LDAP_TLS_KEY_FILENAME: ldap.kafka-network_key.pem
         #LDAP_TLS_CA_CRT_FILENAME: ca.crt
         #LDAP_TLS: 'true'
     volumes:
@@ -28,8 +28,8 @@ services:
       - ./certs:/container/service/slapd/assets/certs:ro
     command: "--copy-service --loglevel debug"
     networks:
-      - kafka-network
+      - kafka_network
 
 networks:
-  kafka-network:
-    name: kafka_network
+  kafka_network:
+    name: kafka-network

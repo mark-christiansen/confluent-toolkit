@@ -1,4 +1,4 @@
-FROM confluentinc/cp-server-connect:7.0.1
+FROM confluentinc/cp-server-connect:7.1.0
 
 USER root
 

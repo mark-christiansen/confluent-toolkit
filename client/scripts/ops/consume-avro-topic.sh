@@ -12,7 +12,7 @@ GROUP=$3
 
 # this and the basic auth properties being passed in the  command are hacks to get around the fact that 
 # kafka-avro-console-consumer won't pull these properties properly from the $KAFKA_CONFIG
-export SCHEMA_REGISTRY_OPTS="-Djavax.net.ssl.trustStore=$KEYSTORE_DIR/kafka1.kafka_network.truststore.jks -Djavax.net.ssl.trustStorePassword=$KEYSTORE_PASSWORD"
+export SCHEMA_REGISTRY_OPTS="-Djavax.net.ssl.trustStore=$KEYSTORE_DIR/$TRUSTSTORE_FILENAME -Djavax.net.ssl.trustStorePassword=$KEYSTORE_PASSWORD"
 
 kafka-avro-console-consumer -bootstrap-server $BROKER_URL --consumer.config $KAFKA_CONFIG \
 --property print.key=true --property key.separator="   " --property key.deserializer=org.apache.kafka.common.serialization.LongDeserializer \
