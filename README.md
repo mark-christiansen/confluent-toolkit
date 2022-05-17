@@ -1,4 +1,4 @@
-# confluent-platform-toolkit
+# confluent-toolkit
 
 ## Summary
 
