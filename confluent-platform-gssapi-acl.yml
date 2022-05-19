@@ -47,6 +47,7 @@ services:
           -Djava.security.krb5.conf=/etc/krb5.conf
           -Dzookeeper.4lw.commands.whitelist=*
           -Dsun.security.krb5.debug=true
+      KAFKA_HEAP_OPTS: "-Xms${ZK_HEAP} -Xmx${ZK_HEAP}"
     volumes:
       - ./secrets/gssapi-zoo1-jaas.conf:/etc/kafka/jaas.conf:ro
       - ./kerberos/keytabs/zoo.keytab:/etc/security/keytabs/zoo.keytab:ro
@@ -107,6 +108,7 @@ services:
           -Djava.security.krb5.conf=/etc/krb5.conf
           -Dzookeeper.4lw.commands.whitelist=*
           -Dsun.security.krb5.debug=true
+      KAFKA_HEAP_OPTS: "-Xms${ZK_HEAP} -Xmx${ZK_HEAP}"
     volumes:
       - ./secrets/gssapi-zoo2-jaas.conf:/etc/kafka/jaas.conf:ro
       - ./kerberos/keytabs/zoo.keytab:/etc/security/keytabs/zoo.keytab:ro
@@ -167,6 +169,7 @@ services:
           -Djava.security.krb5.conf=/etc/krb5.conf
           -Dzookeeper.4lw.commands.whitelist=*
           -Dsun.security.krb5.debug=true
+      KAFKA_HEAP_OPTS: "-Xms${ZK_HEAP} -Xmx${ZK_HEAP}"
     volumes:
       - ./secrets/gssapi-zoo3-jaas.conf:/etc/kafka/jaas.conf:ro
       - ./kerberos/keytabs/zoo.keytab:/etc/security/keytabs/zoo.keytab:ro
@@ -315,6 +318,7 @@ services:
       KAFKA_OPTS: -Djava.security.auth.login.config=/etc/kafka/jaas.conf
                   -Djava.security.krb5.conf=/etc/krb5.conf
                   -Dsun.security.krb5.debug=true
+      KAFKA_HEAP_OPTS: "-Xms${BROKER_HEAP} -Xmx${BROKER_HEAP}"
     volumes:
       - ./secrets/gssapi-zoo-client-jaas.conf:/etc/kafka/jaas.conf:ro
       - ./kerberos/keytabs/kafka.keytab:/etc/security/keytabs/kafka.keytab:ro
@@ -461,6 +465,7 @@ services:
       KAFKA_OPTS: -Djava.security.auth.login.config=/etc/kafka/jaas.conf
                   -Djava.security.krb5.conf=/etc/krb5.conf
                   -Dsun.security.krb5.debug=true
+      KAFKA_HEAP_OPTS: "-Xms${BROKER_HEAP} -Xmx${BROKER_HEAP}"
     volumes:
       - ./secrets/gssapi-zoo-client-jaas.conf:/etc/kafka/jaas.conf:ro
       - ./kerberos/keytabs/kafka.keytab:/etc/security/keytabs/kafka.keytab:ro
@@ -607,6 +612,7 @@ services:
       KAFKA_OPTS: -Djava.security.auth.login.config=/etc/kafka/jaas.conf
                   -Djava.security.krb5.conf=/etc/krb5.conf
                   -Dsun.security.krb5.debug=true
+      KAFKA_HEAP_OPTS: "-Xms${BROKER_HEAP} -Xmx${BROKER_HEAP}"
     volumes:
       - ./secrets/gssapi-zoo-client-jaas.conf:/etc/kafka/jaas.conf:ro
       - ./kerberos/keytabs/kafka.keytab:/etc/security/keytabs/kafka.keytab:ro
@@ -731,6 +737,7 @@ services:
       # JVM Opts
       SCHEMA_REGISTRY_OPTS: -Djava.security.krb5.conf=/etc/krb5.conf
                             -Dsun.security.krb5.debug=true
+      KAFKA_HEAP_OPTS: "-Xms${SCHEMA_HEAP} -Xmx${SCHEMA_HEAP}"
     volumes:
       - ./kerberos/keytabs/schema.keytab:/etc/security/keytabs/schema.keytab:ro
       - ./kerberos/krb5.conf:/etc/krb5.conf:ro
@@ -867,6 +874,12 @@ services:
               -Djavax.net.ssl.keyStore=/var/ssl/private/connect1.${DOMAIN}.keystore.jks 
               -Djavax.net.ssl.keyStorePassword=${KEYSTORE_PASSWORD}
       #KAFKA_JMX_OPTS: "-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port=9010 -Dcom.sun.management.jmxremote.rmi.port=9010 -Djava.rmi.server.hostname=10.0.0.193"
+      KAFKA_JVM_PERFORMANCE_OPTS: >-
+              -server -XX:+UseG1GC -XX:GCTimeRatio=1
+              -XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=20
+              -XX:MaxGCPauseMillis=10000 -XX:InitiatingHeapOccupancyPercent=35 -XX:+ExplicitGCInvokesConcurrent
+              -XX:MaxInlineLevel=15 -Djava.awt.headless=true
+      KAFKA_HEAP_OPTS: "-Xms${CONNECT_HEAP} -Xmx${CONNECT_HEAP}"
     volumes:
       - ./kerberos/keytabs/connect.keytab:/etc/security/keytabs/connect.keytab:ro
       - ./kerberos/krb5.conf:/etc/krb5.conf:ro
@@ -952,6 +965,7 @@ services:
           principal="ksql1@${REALM}";
       # logging
       KSQL_LOG4J_ROOT_LOGLEVEL: INFO
+      KAFKA_HEAP_OPTS: "-Xms${KSQL_HEAP} -Xmx${KSQL_HEAP}"
     volumes:
       - ./kerberos/keytabs/ksql.keytab:/etc/security/keytabs/ksql.keytab:ro
       - ./kerberos/krb5.conf:/etc/krb5.conf:ro
@@ -1112,6 +1126,7 @@ services:
       # logging
       CONTROL_CENTER_LOG4J_ROOT_LOGLEVEL: "INFO"
       CONTROL_CENTER_OPTS: "-Djava.security.auth.login.config=/etc/kafka/jaas.conf"
+      KAFKA_HEAP_OPTS: "-Xms${C3_HEAP} -Xmx${C3_HEAP}"
     volumes:
       - ./kerberos/keytabs/c3.keytab:/etc/security/keytabs/c3.keytab:ro
       - ./kerberos/krb5.conf:/etc/krb5.conf:ro

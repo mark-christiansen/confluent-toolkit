@@ -101,3 +101,24 @@ rules:
   type: GAUGE
   labels:
     quantile: "0.$4"
+
+# cluster linking metrics
+- pattern: kafka.server<type=([^,]+), state=([^,]+), link-name=([^,]+)><>(.+):(.*)
+  name: kafka_server_$1_$4
+  labels:
+    state: "$2"
+    link_name: "$3"
+
+- pattern: kafka.server<type=([^,]+), mode=([^,]+), link-id=([^,]+)><>(.+):(.*)
+  name: kafka_server_$1_$4
+  labels:
+    state: "$2"
+    link_name: "$3"
+
+- pattern: kafka.server<type=([^,]+), mode=([^,]+), state=([^,]+), link-name=([^,]+)><>(.+):(.*)
+  name: kafka_server_$1_$5
+  type: GAUGE
+  labels:
+    mode: "$2"
+    state: "$3"
+    link_name: "$4"
