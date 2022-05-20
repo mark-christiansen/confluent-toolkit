@@ -10,6 +10,7 @@ This project is used to launch, test and teardown different Confluent Platform e
 - Confluent Platform Enterprise with SASL SCRAM SHA-512 authentication and RBAC authorization (env=scram-rbac)
 - Confluent Platform Enterprise with SASL Kerberos (GSSAPI) authentication and RBAC authorization (env=gssapi-rbac)
 - Confluent Platform Enterprise with Kraft using mTLS authentication and no authorization (env=kraft)
+- Two Confluent Platform Enterprise Clusters using Cluster Linking to sync data between source and destination (env=cl)
 
 ## Requirements
 
@@ -146,6 +147,200 @@ This environment is a three broker, zero zookeeper cluster of Confluent Platform
 The authentication method being used in mTLS, meaning that the principal is coming from the CN of the client certificate. There is basic authentication on the Schema Registry server and Kafka Connect REST APIs. There is no authorization setup because it isn't supported by KRaft. Two connectors, Datagen Connector and JDBC Sink Connector, are setup by default.
 
 If you want to verify your environment is working correctly, you can open up a connection to the Postgres server on "localhost:5432" running in Docker and verify that there is a table created in the `public` schema called `person` which should be populated with records. This table is populated by the JDBC Sink Connector from a topic populated by the Datagen Connector.
+
+## Environment: Two Clusters using Cluster Linking to sync data between source and destination
+
+This environment has two three broker, three zookeeper Confluent Platform Enterprise clusters. The source cluster is CP 6.2.0 and the destination cluster is CP 7.1.1. The authentication method being used in both clusters is mTLS, meaning that the principal is coming from the CN of the client certificate. A Cluster Link is setup on the destination cluster called `test` and three topics (`test1`, `test2, `test3`) in the source cluster on startup. Also, three [Mirror Topics](https://docs.confluent.io/platform/current/multi-dc-deployments/cluster-linking/mirror-topics-cp.html) are created on the `test` Cluster Link that sync from each of the three topics in the source cluster. Also, two Kafka configurations are setup for accessing data in the source cluster (called `src`) and the destination cluster (called `dst`). These can be used when executing the client scripts to list topics and describe consumers (ex: `./list-topics.sh src` or `./list-mirror-topics.sh dst`).
+
+[Cluster Linking](https://docs.confluent.io/platform/current/multi-dc-deployments/cluster-linking/index.html) is a feature of Confluent Platform 7.x used for sinking data between Kafka clusters. Unlike [Confluent Replicator](https://docs.confluent.io/platform/current/control-center/replicators.html) and its predecessor [MirrorMaker](https://docs.confluent.io/4.0.0/multi-dc/mirrormaker.html), Cluster Linking provides byte-per-byte replication, meaning the partitions will be copied over exactly how they appear in the source cluster. In addition, topic configs, consumer offsets and ACLs can be synced using Cluster Linked making it ideal for migrations. Another popular use case is for pushing data from on-premise Confluent Platform to Confluent Cloud. Cluster Linking can be setup to run from the source cluster (push) or the destination cluster (pull) as long at the cluster it is setup in is Confluent Platform 7.x+. Cluster Linking is also much more efficient than Confluent Replicator because it uses Replica Fetchers, the mechanism brokers use to replicate data to one another. Cluster Linking has a specific Replica Fetcher called the Cluster Link Replica Fetcher.
+
+Cluster Linking relies on Cluster Links and read-only [Mirror Topics](https://docs.confluent.io/platform/current/multi-dc-deployments/cluster-linking/mirror-topics-cp.html) for syncing data between two clusters. The Cluster Link has the other cluster's connect information in its configuration which is stored in Zookeeper at `/config/cluster-links/<cluster-link-id>`. To see this information, load up the `cl` environment, shell into the `client` container.
+
+```
+./setup.sh cl
+docker exec -it client /bin/bash
+```
+
+Then run the script `zk-shell.sh dst` inside the client container.
+
+```
+$ cd /scripts/ops
+$ ./zk-shell.sh dst
+```
+
+Inside the Zookeeper shell execute the command `` as shown below.
+
+```
+> ls /config/cluster-links
+
+[64179a02-52a6-4ed5-8f2a-b8f2851a454e]
+
+> get /config/cluster-links/64179a02-52a6-4ed5-8f2a-b8f2851a454e
+```
+
+You will see something like the data below.
+
+```
+{
+  "version": 1,
+  "config": {
+    "consumer.offset.group.filters": "{\"groupFilters\": [{\"name\": \"*\",\"patternType\": \"LITERAL\",\"filterType\": \"INCLUDE\"}]}",
+    "acl.filters": "{\"aclFilters\": [{\"resourceFilter\": {\"resourceType\": \"any\",\"patternType\": \"any\"},\"accessFilter\": {\"operation\": \"any\",\"permissionType\": \"any\"}}]}",
+    "auto.create.mirror.topics.filters": "{\"topicFilters\": [{\"name\": \"_\",\"patternType\": \"PREFIXED\",\"filterType\": \"EXCLUDE\"},{\"name\": \"app1\",\"patternType\": \"PREFIXED\",\"filterType\": \"INCLUDE\"}]}",
+    "auto.create.mirror.topics.enable": "true",
+    "consumer.offset.sync.ms": "15000",
+    "local.listener.name": "INTERNAL",
+    "ssl.keystore.location": "/var/ssl/private/kafka1.mycompany.com.keystore.jks",
+    "bootstrap.servers": "lb:29092",
+    "config.providers.clusterlink.param.encrypted.secret.ssl.truststore.password": "encryptedPassword:fJv2kB1ZFdXHmsvZtPS9eA==,keyLength:128,cipherAlgorithm:AES/CBC/PKCS5Padding,initializationVector:Vc0xnbzOWQplWBh5dk5QLw==,keyFactoryAlgorithm:PBKDF2WithHmacSHA512,passwordLength:14,salt:upuwR9DWzcAvFw/3w3uXaelJoaAfMi5I6YYZMZWaGu1nVO6AP19C6zqJFDCj5OAPaZK7hAjJ1z/rI5EL2Jw3dBsF2HC2KsMEwVcim3SruS6C8xN8iH0s/XmMPDfPCOHRAkdENVcLBu+Uz7pqF1CywytnQTVhIrnI/kr2j1a+r8GEa2Ttk3OLjOUwEbGs7uvPwabsVMxLoshdwreLKt6+7rquxNwcqdMDxYxKWHeodCu7gJSnI7RkMu9mjFHJFtjLZnk45cUt1pSgypZKRC63RdfihIvZg7NdlJKU/Ewmn8pDc4aYEYi0yT8W3iFKbUO/ceLgrhkmlPxzYPqunZ6n3w==,iterations:4096",
+    "consumer.offset.sync.enable": "true",
+    "acl.sync.enable": "false",
+    "security.protocol": "SSL",
+    "ssl.truststore.location": "/var/ssl/private/kafka1.mycompany.com.truststore.jks",
+    "config.providers.clusterlink.param.encrypted.secret.": "encryptedPassword:hDyX6SoGv8WRSbFIYHv9Hg==,keyLength:128,cipherAlgorithm:AES/CBC/PKCS5Padding,initializationVector:2oTpbZRLl59hTQiYR9BsFQ==,keyFactoryAlgorithm:PBKDF2WithHmacSHA512,passwordLength:14,salt:zI1ZHp3Nn7Jm/oYhXOcfaIN283g2t82BIkGpHzdqT9tzugF+c1Onr9oW3SleUkJBusBhikM38M2ytJ164J99ShwpnZ+mThvMJMumwXpVGLHSbW99S/03UaCgnnbx1dfbptKf3rVW2+PiRNOxGX0/iwjQqyS8v8uYOGF/D1/9TlQOqdPVTiEXoZNryVsjii0GBDEAbQiUtICXi6JzqIWYRfv7kK8JM3Wp1KdmbE7+Xl0Qh4NzLmhWomXWCNT6Fz/weiea0f/vFqOwtFxMx4MmpB68+BzgKWrDyRUy/vm/BW7JmCvFhn8Uc+r4CvsrhceBUpeQ+OcZKve0AB4UZ3YEfg==,iterations:4096",
+    "ssl.keystore.password": "${clusterlink:ssl.keystore.password}",
+    "topic.config.sync.ms": "5000",
+    "config.providers.clusterlink.param.encrypted.secret.ssl.keystore.password": "encryptedPassword:tYJafffh2BRpnVedNpktrA==,keyLength:128,cipherAlgorithm:AES/CBC/PKCS5Padding,initializationVector:9NNcpf55bvn44fq2DrLhYg==,keyFactoryAlgorithm:PBKDF2WithHmacSHA512,passwordLength:14,salt:npd2dp0ozY+FSrNB328EG/qEO5Mc7ZwIZg4XU1KTABx/aef0yhdSCNLak5fkMMs2arU7uPeps65fluto30cYpEAj4GOXFiO/1FjaJ1jl0s4Dxob3Qs9vxRerVQQ3qco/EkmNhEhswPM18+AhGU/7lAUbv5li/ffCRXHErB02/MzlEwlyqOsk73OWjG1bFpZpUzi3XHms85V50KJpgps+G7fpLXzTq9uOE4qDjuNZjMkDeaqaklRlqSZ6GVnOT6C6PqRryxdT5Nk47ooiGsIlAdrO1t2CxpRzVSTh6GBHr3rHGVAnJ3wb43sEmMMhtghhAEITRd4aSJ8O1aJPr8CuXQ==,iterations:4096",
+    "ssl.truststore.password": "${clusterlink:ssl.truststore.password}",
+    "cluster.link.paused": "false"
+  }
+}
+```
+
+The `cl` environment is setup with a source cluster of CP 6.2.0 and a destination cluster of CP 7.1.1. The cluster link is setup in the destination cluster so you use the profile `dst` to look at Mirror Topics and the Cluster Link as shown below.
+
+```
+$ cd /scripts/clusterlink
+$ ./list-mirror-topics.sh dst
+
+Topic: test2	LinkName: test	LinkId: 64179a02-52a6-4ed5-8f2a-b8f2851a454e	MirrorTopic: test2	State: ACTIVE	StateTime: 2022-05-20 23:12:02
+	Partition: 0	State: ACTIVE	DestLogEndOffset: 194	LastFetchSourceHighWatermark: 194	Lag: 0	TimeSinceLastFetchMs: 99792
+	Partition: 1	State: ACTIVE	DestLogEndOffset: 190	LastFetchSourceHighWatermark: 190	Lag: 0	TimeSinceLastFetchMs: 98934
+	Partition: 2	State: ACTIVE	DestLogEndOffset: 205	LastFetchSourceHighWatermark: 205	Lag: 0	TimeSinceLastFetchMs: 101146
+	Partition: 3	State: ACTIVE	DestLogEndOffset: 205	LastFetchSourceHighWatermark: 205	Lag: 0	TimeSinceLastFetchMs: 99424
+	Partition: 4	State: ACTIVE	DestLogEndOffset: 206	LastFetchSourceHighWatermark: 206	Lag: 0	TimeSinceLastFetchMs: 98602
+Topic: test3	LinkName: test	LinkId: 64179a02-52a6-4ed5-8f2a-b8f2851a454e	MirrorTopic: test3	State: ACTIVE	StateTime: 2022-05-20 23:12:06
+	Partition: 0	State: ACTIVE	DestLogEndOffset: 190	LastFetchSourceHighWatermark: 190	Lag: 0	TimeSinceLastFetchMs: 80095
+	Partition: 1	State: ACTIVE	DestLogEndOffset: 187	LastFetchSourceHighWatermark: 187	Lag: 0	TimeSinceLastFetchMs: 79106
+	Partition: 2	State: ACTIVE	DestLogEndOffset: 206	LastFetchSourceHighWatermark: 206	Lag: 0	TimeSinceLastFetchMs: 82690
+	Partition: 3	State: ACTIVE	DestLogEndOffset: 207	LastFetchSourceHighWatermark: 207	Lag: 0	TimeSinceLastFetchMs: 79539
+	Partition: 4	State: ACTIVE	DestLogEndOffset: 210	LastFetchSourceHighWatermark: 210	Lag: 0	TimeSinceLastFetchMs: 78682
+Topic: test1	LinkName: test	LinkId: 64179a02-52a6-4ed5-8f2a-b8f2851a454e	MirrorTopic: test1	State: ACTIVE	StateTime: 2022-05-20 23:11:59
+	Partition: 0	State: ACTIVE	DestLogEndOffset: 208	LastFetchSourceHighWatermark: 208	Lag: 0	TimeSinceLastFetchMs: 118571
+	Partition: 1	State: ACTIVE	DestLogEndOffset: 180	LastFetchSourceHighWatermark: 180	Lag: 0	TimeSinceLastFetchMs: 119636
+	Partition: 2	State: ACTIVE	DestLogEndOffset: 208	LastFetchSourceHighWatermark: 208	Lag: 0	TimeSinceLastFetchMs: 119967
+	Partition: 3	State: ACTIVE	DestLogEndOffset: 208	LastFetchSourceHighWatermark: 208	Lag: 0	TimeSinceLastFetchMs: 118548
+	Partition: 4	State: ACTIVE	DestLogEndOffset: 196	LastFetchSourceHighWatermark: 196	Lag: 0	TimeSinceLastFetchMs: 119221
+
+$ ./list-cluster-links.sh dst
+
+Link name: 'test', link ID: '64179a02-52a6-4ed5-8f2a-b8f2851a454e', remote cluster ID: 'UFbunQ0fTuWhMeV9C3ffcQ', local cluster ID: 'CgjKHeSdQX-v1Tz37fXqyg', remote cluster available: 'true', topics: [test2, test3, test1]
+```
+
+The environment is setup with one cluster link named `test` and three topics (`test1`, `test2, `test3`). The topics should appear as regular topics in the source cluster if you execute these commands.
+
+```
+$ cd /scripts/ops
+$ ./list-topics.sh src
+
+__consumer_offsets
+_confluent-license
+_confluent-metrics
+_confluent-telemetry-metrics
+_confluent_balancer_api_state
+_confluent_balancer_broker_samples
+_confluent_balancer_partition_samples
+test1
+test2
+test3
+```
+
+The environment also produces and consumes messages to all three topics in the source cluster on startup. To verify Cluster Linking is working correctly, describe the consumer `test` in both environments and verify they match and that the offsets for the partitions are not zero.
+
+```
+$ cd /scripts/ops
+$ ./describe-consumer.sh src test
+
+GROUP           TOPIC           PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG             CONSUMER-ID     HOST            CLIENT-ID
+test            test1           3          208             208             0               -               -               -
+test            test2           4          206             206             0               -               -               -
+test            test3           0          190             190             0               -               -               -
+test            test2           1          190             190             0               -               -               -
+test            test3           2          206             206             0               -               -               -
+test            test1           0          208             208             0               -               -               -
+test            test1           4          196             196             0               -               -               -
+test            test1           1          180             180             0               -               -               -
+test            test3           3          207             207             0               -               -               -
+test            test2           2          205             205             0               -               -               -
+test            test2           0          194             194             0               -               -               -
+test            test2           3          205             205             0               -               -               -
+test            test1           2          208             208             0               -               -               -
+test            test3           1          187             187             0               -               -               -
+test            test3           4          210             210             0               -               -               -
+
+$ ./describe-consumer.sh dst test
+
+GROUP           TOPIC           PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG             CONSUMER-ID     HOST            CLIENT-ID
+test            test1           3          208             208             0               -               -               -
+test            test2           4          206             206             0               -               -               -
+test            test3           0          190             190             0               -               -               -
+test            test2           1          190             190             0               -               -               -
+test            test3           2          206             206             0               -               -               -
+test            test1           0          208             208             0               -               -               -
+test            test1           4          196             196             0               -               -               -
+test            test1           1          180             180             0               -               -               -
+test            test3           3          207             207             0               -               -               -
+test            test2           2          205             205             0               -               -               -
+test            test2           0          194             194             0               -               -               -
+test            test2           3          205             205             0               -               -               -
+test            test1           2          208             208             0               -               -               -
+test            test3           1          187             187             0               -               -               -
+test            test3           4          210             210             0               -               -               -
+```
+
+Cluster Linking will change the Cluster Link status and Mirror Topic statuses from `ACTIVE` to `SOURCE_UNAVAILABLE` when the source cluster can't be reached. The time it takes to recognize that the source cluster is unreachable and stop the Cluster Link Replica Fetcher is determined by the Cluster Link properties `availability.check.ms` and `availability.check.consecutive.failure.threshold` (see [this](https://docs.confluent.io/platform/current/multi-dc-deployments/cluster-linking/configs.html) documentation for defaults. To test this in the `cl` environment, stop the containers `kafka1`, `kafka2`, and `kafka3` and wait approximately five minutes.
+
+```
+docker stop kafka1 kafka2 kafka3
+docker exec -it client /bin/bash
+```
+
+You can see the statuses of the Mirror Topics by executing this script inside the `client` shell.
+
+```
+$ cd /scripts/clusterlink
+$ ./list-mirror-links.sh dst
+
+Topic: test2	LinkName: test	LinkId: 64179a02-52a6-4ed5-8f2a-b8f2851a454e	MirrorTopic: test2	State: SOURCE_UNAVAILABLE	StateTime: 2022-05-20 23:26:53
+	Partition: 0	State: SOURCE_UNAVAILABLE	DestLogEndOffset: 194	LastFetchSourceHighWatermark: 194	Lag: 0	TimeSinceLastFetchMs: 610662
+	Partition: 1	State: SOURCE_UNAVAILABLE	DestLogEndOffset: 190	LastFetchSourceHighWatermark: 190	Lag: 0	TimeSinceLastFetchMs: 610303
+	Partition: 2	State: SOURCE_UNAVAILABLE	DestLogEndOffset: 205	LastFetchSourceHighWatermark: 205	Lag: 0	TimeSinceLastFetchMs: 610443
+	Partition: 3	State: SOURCE_UNAVAILABLE	DestLogEndOffset: 205	LastFetchSourceHighWatermark: 205	Lag: 0	TimeSinceLastFetchMs: 610664
+	Partition: 4	State: SOURCE_UNAVAILABLE	DestLogEndOffset: 206	LastFetchSourceHighWatermark: 206	Lag: 0	TimeSinceLastFetchMs: 610304
+Topic: test3	LinkName: test	LinkId: 64179a02-52a6-4ed5-8f2a-b8f2851a454e	MirrorTopic: test3	State: SOURCE_UNAVAILABLE	StateTime: 2022-05-20 23:26:53
+	Partition: 0	State: SOURCE_UNAVAILABLE	DestLogEndOffset: 190	LastFetchSourceHighWatermark: 190	Lag: 0	TimeSinceLastFetchMs: 610664
+	Partition: 1	State: SOURCE_UNAVAILABLE	DestLogEndOffset: 187	LastFetchSourceHighWatermark: 187	Lag: 0	TimeSinceLastFetchMs: 610304
+	Partition: 2	State: SOURCE_UNAVAILABLE	DestLogEndOffset: 206	LastFetchSourceHighWatermark: -1	Lag: -207	TimeSinceLastFetchMs: 1653089228052
+	Partition: 3	State: SOURCE_UNAVAILABLE	DestLogEndOffset: 207	LastFetchSourceHighWatermark: 207	Lag: 0	TimeSinceLastFetchMs: 610664
+	Partition: 4	State: SOURCE_UNAVAILABLE	DestLogEndOffset: 210	LastFetchSourceHighWatermark: 210	Lag: 0	TimeSinceLastFetchMs: 610304
+Topic: test1	LinkName: test	LinkId: 64179a02-52a6-4ed5-8f2a-b8f2851a454e	MirrorTopic: test1	State: SOURCE_UNAVAILABLE	StateTime: 2022-05-20 23:26:53
+	Partition: 0	State: SOURCE_UNAVAILABLE	DestLogEndOffset: 208	LastFetchSourceHighWatermark: 208	Lag: 0	TimeSinceLastFetchMs: 610664
+	Partition: 1	State: SOURCE_UNAVAILABLE	DestLogEndOffset: 180	LastFetchSourceHighWatermark: 180	Lag: 0	TimeSinceLastFetchMs: 610834
+	Partition: 2	State: SOURCE_UNAVAILABLE	DestLogEndOffset: 208	LastFetchSourceHighWatermark: 208	Lag: 0	TimeSinceLastFetchMs: 610444
+	Partition: 3	State: SOURCE_UNAVAILABLE	DestLogEndOffset: 208	LastFetchSourceHighWatermark: 208	Lag: 0	TimeSinceLastFetchMs: 610664
+	Partition: 4	State: SOURCE_UNAVAILABLE	DestLogEndOffset: 196	LastFetchSourceHighWatermark: 196	Lag: 0	TimeSinceLastFetchMs: 610834
+```
+
+Once the source cluster brokers are started again, you should should see the Mirror Topics change from status `SOURCE_UNAVAILABLE` to `ACTIVE` shortly. In addition, you will see some of the lags on the Mirror Topic partitions set to negative numbers. They will stay this way even after the Mirror Topics return to `ACTIVE`, until the Cluster Link Replica Fetcher loads more data from the source partition into this topic partition.
+
+The Cluster Link can be paused by changing the `cluster.link.paused` setting in `/scripts/config/cl.config` to `true` and updating the Cluster Link.
+
+```
+$ cd /scripts/clusterlink
+./update-cluster-link.sh dst test
+```
+
+This will change the status of the Mirror Topics to `PAUSED` and all syncing of messages, consumer offsets, and ACLs will be stopped until the Cluster Link is unpaused.
 
 ## Usage for Confluent Professional Services (CPS) Engagements
 

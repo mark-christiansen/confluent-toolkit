@@ -9,6 +9,6 @@ cd ${BASE}
 LINK=$2
 
 kafka-configs --bootstrap-server $BROKER_URL --alter --cluster-link $LINK --command-config $KAFKA_CONFIG \
---add-config-file cluster-link.config
+--add-config-file $CL_CONFIG
 
 echo "Updated cluster link $LINK"

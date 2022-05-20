@@ -42,6 +42,7 @@ services:
       KAFKA_OPTS: >-
           -Djava.security.auth.login.config=/etc/kafka/secrets/zoo-server-jaas.conf 
           -Dzookeeper.4lw.commands.whitelist=*
+      KAFKA_HEAP_OPTS: "-Xms${ZK_HEAP} -Xmx${ZK_HEAP}"
     volumes:
       - ./volumes/zoo-1/data:/var/lib/zookeeper/log
       - ./volumes/zoo-1/logs:/var/log/zookeeper
@@ -95,6 +96,7 @@ services:
       KAFKA_OPTS: >-
           -Djava.security.auth.login.config=/etc/kafka/secrets/zoo-server-jaas.conf 
           -Dzookeeper.4lw.commands.whitelist=*
+      KAFKA_HEAP_OPTS: "-Xms${ZK_HEAP} -Xmx${ZK_HEAP}"
     volumes:
       - ./volumes/zoo-2/data:/var/lib/zookeeper/log
       - ./volumes/zoo-2/logs:/var/log/zookeeper
@@ -148,6 +150,7 @@ services:
       KAFKA_OPTS: >-
           -Djava.security.auth.login.config=/etc/kafka/secrets/zoo-server-jaas.conf 
           -Dzookeeper.4lw.commands.whitelist=*
+      KAFKA_HEAP_OPTS: "-Xms${ZK_HEAP} -Xmx${ZK_HEAP}"
     volumes:
       - ./volumes/zoo-3/data:/var/lib/zookeeper/log
       - ./volumes/zoo-3/logs:/var/log/zookeeper
@@ -357,6 +360,7 @@ services:
           -Djava.security.auth.login.config=/etc/kafka/secrets/zoo-client-jaas.conf 
           -Dzookeeper.sasl.client=true 
           -Dzookeeper.sasl.client.username=kafka
+      KAFKA_HEAP_OPTS: "-Xms${BROKER_HEAP} -Xmx${BROKER_HEAP}"
     volumes:
       - ./volumes/kafka-1/data:/var/lib/kafka/data
       - ./volumes/kafka-1/logs:/var/log/kafka
@@ -559,6 +563,7 @@ services:
           -Djava.security.auth.login.config=/etc/kafka/secrets/zoo-client-jaas.conf 
           -Dzookeeper.sasl.client=true 
           -Dzookeeper.sasl.client.username=kafka
+      KAFKA_HEAP_OPTS: "-Xms${BROKER_HEAP} -Xmx${BROKER_HEAP}"
     volumes:
       - ./volumes/kafka-2/data:/var/lib/kafka/data
       - ./volumes/kafka-2/logs:/var/log/kafka
@@ -760,6 +765,7 @@ services:
           -Djava.security.auth.login.config=/etc/kafka/secrets/zoo-client-jaas.conf 
           -Dzookeeper.sasl.client=true 
           -Dzookeeper.sasl.client.username=kafka
+      KAFKA_HEAP_OPTS: "-Xms${BROKER_HEAP} -Xmx${BROKER_HEAP}"
     volumes:
       - ./volumes/kafka-3/data:/var/lib/kafka/data
       - ./volumes/kafka-3/logs:/var/log/kafka
@@ -918,6 +924,7 @@ services:
       SCHEMA_REGISTRY_LEADER_ELIGIBILITY: 'true'
       SCHEMA_REGISTRY_MODE_MUTABILITY: 'true'
       SCHEMA_REGISTRY_DEBUG: 'true'
+      KAFKA_HEAP_OPTS: "-Xms${SCHEMA_HEAP} -Xmx${SCHEMA_HEAP}"
     volumes:
       - ./certs:/var/ssl/private:ro
     networks:
@@ -1073,6 +1080,12 @@ services:
               -Djavax.net.ssl.keyStore=/var/ssl/private/connect1.${DOMAIN}.keystore.jks 
               -Djavax.net.ssl.keyStorePassword=${KEYSTORE_PASSWORD}
       #KAFKA_JMX_OPTS: "-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port=9010 -Dcom.sun.management.jmxremote.rmi.port=9010 -Djava.rmi.server.hostname=10.0.0.193"
+      KAFKA_JVM_PERFORMANCE_OPTS: >-
+              -server -XX:+UseG1GC -XX:GCTimeRatio=1
+              -XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=20
+              -XX:MaxGCPauseMillis=10000 -XX:InitiatingHeapOccupancyPercent=35 -XX:+ExplicitGCInvokesConcurrent
+              -XX:MaxInlineLevel=15 -Djava.awt.headless=true
+      KAFKA_HEAP_OPTS: "-Xms${CONNECT_HEAP} -Xmx${CONNECT_HEAP}"
     volumes:
       - ./schemas:/schemas:ro
       - ./certs:/var/ssl/private:ro
@@ -1163,6 +1176,7 @@ services:
               password="ksql-secret";
       # logging
       KSQL_LOG4J_ROOT_LOGLEVEL: INFO
+      KAFKA_HEAP_OPTS: "-Xms${KSQL_HEAP} -Xmx${KSQL_HEAP}"
     volumes:
       - ./certs:/var/ssl/private:ro
     networks:
@@ -1319,6 +1333,7 @@ services:
       # Used by Control Center to connect to the Admin API for Self Balancing Clusters
       CONTROL_CENTER_STREAMS_CPREST_URL: "https://kafka1:8091,https://kafka2:8092,https://kafka3:8093"
       #CONTROL_CENTER_LOG4J_ROOT_LOGLEVEL: "TRACE"
+      KAFKA_HEAP_OPTS: "-Xms${C3_HEAP} -Xmx${C3_HEAP}"
     volumes:
       - ./volumes/c3/data:/var/lib/c3/data
       - ./certs:/var/ssl/private:ro

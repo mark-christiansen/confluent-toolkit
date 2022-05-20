@@ -38,6 +38,7 @@ services:
       #ZOOKEEPER_SSL_QUORUM_CIPHER_SUITES: ${TLS_CIPHER_SUITES}
       ZOOKEEPER_LOG4J_ROOT_LOGLEVEL: WARN
       KAFKA_OPTS: "-Dzookeeper.4lw.commands.whitelist=*"
+      KAFKA_HEAP_OPTS: "-Xms${ZK_HEAP} -Xmx${ZK_HEAP}"
       #KAFKA_OPTS: '-Djavax.net.debug=ssl'
     volumes:
       - ./volumes/zoo1/log:/var/lib/zookeeper/log
@@ -86,6 +87,7 @@ services:
       #ZOOKEEPER_SSL_QUORUM_CIPHER_SUITES: ${TLS_CIPHER_SUITES}
       ZOOKEEPER_LOG4J_ROOT_LOGLEVEL: DEBUG
       KAFKA_OPTS: "-Dzookeeper.4lw.commands.whitelist=*"
+      KAFKA_HEAP_OPTS: "-Xms${ZK_HEAP} -Xmx${ZK_HEAP}"
       #KAFKA_OPTS: '-Djavax.net.debug=ssl'
     volumes:
       - ./volumes/zoo2/log:/var/lib/zookeeper/log
@@ -133,6 +135,7 @@ services:
       #ZOOKEEPER_SSL_QUORUM_CIPHER_SUITES: ${TLS_CIPHER_SUITES}
       ZOOKEEPER_LOG4J_ROOT_LOGLEVEL: DEBUG
       KAFKA_OPTS: "-Dzookeeper.4lw.commands.whitelist=*"
+      KAFKA_HEAP_OPTS: "-Xms${ZK_HEAP} -Xmx${ZK_HEAP}"
       #KAFKA_OPTS: '-Djavax.net.debug=ssl'
     volumes:
       - ./volumes/zoo3/log:/var/lib/zookeeper/log
@@ -216,6 +219,7 @@ services:
       KAFKA_JMX_PORT: 9010
       KAFKA_JMX_HOSTNAME: localhost
       EXTRA_ARGS: -javaagent:/usr/share/jmx-exporter/jmx_prometheus_javaagent-0.16.1.jar=9200:/usr/share/jmx-exporter/kafka_broker.yml
+      KAFKA_HEAP_OPTS: "-Xms${BROKER_HEAP} -Xmx${BROKER_HEAP}"
     volumes:
       - ./volumes/kafka1/data:/var/lib/kafka/data
       - ./volumes/kafka1/logs:/var/log/kafka
@@ -300,6 +304,7 @@ services:
       KAFKA_JMX_PORT: 9011
       KAFKA_JMX_HOSTNAME: localhost
       EXTRA_ARGS: -javaagent:/usr/share/jmx-exporter/jmx_prometheus_javaagent-0.16.1.jar=9201:/usr/share/jmx-exporter/kafka_broker.yml
+      KAFKA_HEAP_OPTS: "-Xms${BROKER_HEAP} -Xmx${BROKER_HEAP}"
     volumes:
       - ./volumes/kafka2/data:/var/lib/kafka/data
       - ./volumes/kafka2/logs:/var/log/kafka
@@ -384,6 +389,7 @@ services:
       KAFKA_JMX_PORT: 9012
       KAFKA_JMX_HOSTNAME: localhost
       EXTRA_ARGS: -javaagent:/usr/share/jmx-exporter/jmx_prometheus_javaagent-0.16.1.jar=9202:/usr/share/jmx-exporter/kafka_broker.yml
+      KAFKA_HEAP_OPTS: "-Xms${BROKER_HEAP} -Xmx${BROKER_HEAP}"
     volumes:
       - ./volumes/kafka3/data:/var/lib/kafka/data
       - ./volumes/kafka3/logs:/var/log/kafka
@@ -436,6 +442,7 @@ services:
       #ZOOKEEPER_SSL_QUORUM_CIPHER_SUITES: ${TLS_CIPHER_SUITES}
       ZOOKEEPER_LOG4J_ROOT_LOGLEVEL: WARN
       KAFKA_OPTS: "-Dzookeeper.4lw.commands.whitelist=*"
+      KAFKA_HEAP_OPTS: "-Xms${ZK_HEAP} -Xmx${ZK_HEAP}"
       #KAFKA_OPTS: '-Djavax.net.debug=ssl'
     volumes:
       - ./volumes/zoo4/log:/var/lib/zookeeper/log
@@ -484,6 +491,7 @@ services:
       #ZOOKEEPER_SSL_QUORUM_CIPHER_SUITES: ${TLS_CIPHER_SUITES}
       ZOOKEEPER_LOG4J_ROOT_LOGLEVEL: DEBUG
       KAFKA_OPTS: "-Dzookeeper.4lw.commands.whitelist=*"
+      KAFKA_HEAP_OPTS: "-Xms${ZK_HEAP} -Xmx${ZK_HEAP}"
       #KAFKA_OPTS: '-Djavax.net.debug=ssl'
     volumes:
       - ./volumes/zoo5/log:/var/lib/zookeeper/log
@@ -531,6 +539,7 @@ services:
       #ZOOKEEPER_SSL_QUORUM_CIPHER_SUITES: ${TLS_CIPHER_SUITES}
       ZOOKEEPER_LOG4J_ROOT_LOGLEVEL: DEBUG
       KAFKA_OPTS: "-Dzookeeper.4lw.commands.whitelist=*"
+      KAFKA_HEAP_OPTS: "-Xms${ZK_HEAP} -Xmx${ZK_HEAP}"
       #KAFKA_OPTS: '-Djavax.net.debug=ssl'
     volumes:
       - ./volumes/zoo6/log:/var/lib/zookeeper/log
@@ -553,12 +562,21 @@ services:
       - zoo4
       - zoo5
       - zoo6
+      - kafka1
+      - kafka2
+      - kafka3
     depends_on:
       zoo4:
         condition: service_healthy
       zoo5:
         condition: service_healthy
       zoo6:
+        condition: service_healthy
+      kafka1:
+        condition: service_healthy
+      kafka2:
+        condition: service_healthy
+      kafka3:
         condition: service_healthy
     ports:
       - "9097:9097"
@@ -618,6 +636,7 @@ services:
       KAFKA_JMX_PORT: 9013
       KAFKA_JMX_HOSTNAME: localhost
       EXTRA_ARGS: -javaagent:/usr/share/jmx-exporter/jmx_prometheus_javaagent-0.16.1.jar=9203:/usr/share/jmx-exporter/kafka_broker.yml
+      KAFKA_HEAP_OPTS: "-Xms${BROKER_HEAP} -Xmx${BROKER_HEAP}"
     volumes:
       - ./volumes/kafka4/data:/var/lib/kafka/data
       - ./volumes/kafka4/logs:/var/log/kafka
@@ -641,12 +660,21 @@ services:
       - zoo4
       - zoo5
       - zoo6
+      - kafka1
+      - kafka2
+      - kafka3
     depends_on:
       zoo4:
         condition: service_healthy
       zoo5:
         condition: service_healthy
       zoo6:
+        condition: service_healthy
+      kafka1:
+        condition: service_healthy
+      kafka2:
+        condition: service_healthy
+      kafka3:
         condition: service_healthy
     ports:
       - "9098:9098"
@@ -706,6 +734,7 @@ services:
       KAFKA_JMX_PORT: 9014
       KAFKA_JMX_HOSTNAME: localhost
       EXTRA_ARGS: -javaagent:/usr/share/jmx-exporter/jmx_prometheus_javaagent-0.16.1.jar=9204:/usr/share/jmx-exporter/kafka_broker.yml
+      KAFKA_HEAP_OPTS: "-Xms${BROKER_HEAP} -Xmx${BROKER_HEAP}"
     volumes:
       - ./volumes/kafka5/data:/var/lib/kafka/data
       - ./volumes/kafka5/logs:/var/log/kafka
@@ -729,12 +758,21 @@ services:
       - zoo4
       - zoo5
       - zoo6
+      - kafka1
+      - kafka2
+      - kafka3
     depends_on:
       zoo4:
         condition: service_healthy
       zoo5:
         condition: service_healthy
       zoo6:
+        condition: service_healthy
+      kafka1:
+        condition: service_healthy
+      kafka2:
+        condition: service_healthy
+      kafka3:
         condition: service_healthy
     ports:
       - "9099:9099"
@@ -794,6 +832,7 @@ services:
       KAFKA_JMX_PORT: 9015
       KAFKA_JMX_HOSTNAME: localhost
       EXTRA_ARGS: -javaagent:/usr/share/jmx-exporter/jmx_prometheus_javaagent-0.16.1.jar=9205:/usr/share/jmx-exporter/kafka_broker.yml
+      KAFKA_HEAP_OPTS: "-Xms${BROKER_HEAP} -Xmx${BROKER_HEAP}"
     volumes:
       - ./volumes/kafka6/data:/var/lib/kafka/data
       - ./volumes/kafka6/logs:/var/log/kafka
@@ -856,7 +895,7 @@ services:
       - bash
       - -c
       - |
-        sleep 60
+        sleep 5
         cd /scripts/ops/
         echo "Create topics in source cluster"
         ./create-topic.sh src test1 5
