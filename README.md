@@ -237,7 +237,7 @@ $ ./list-cluster-links.sh dst
 Link name: 'test', link ID: '64179a02-52a6-4ed5-8f2a-b8f2851a454e', remote cluster ID: 'UFbunQ0fTuWhMeV9C3ffcQ', local cluster ID: 'CgjKHeSdQX-v1Tz37fXqyg', remote cluster available: 'true', topics: [test2, test3, test1]
 ```
 
-The environment is setup with one cluster link named `test` and three topics (`test1`, `test2, `test3`). The topics should appear as regular topics in the source cluster if you execute these commands.
+The environment is setup with one cluster link named `test` and three topics (`test1`, `test2`, `test3`). The topics should appear as regular topics in the source cluster if you execute these commands.
 
 ```
 $ cd /scripts/ops
